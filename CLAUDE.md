@@ -6,7 +6,7 @@ e `ISel` de uma planilha do escritório. A empresa remove/desativa macros com
 frequência, obrigando a refazer o processo na mão. Agora a planilha fica limpa:
 o programa apenas LÊ o arquivo e escreve o txt no layout 6000/6100.
 
-Versão atual: **3.3.0**. Autor: **Ronald Lira** (Triangulo Contabilidade). Classe única `GeradorArquivo.java`
+Versão atual: **3.4.0**. Autor: **Ronald Lira** (Triangulo Contabilidade). Classe única `GeradorArquivo.java`
 (pacote `br.com.triangulo.gerador`), **sem dependência externa**.
 
 Histórico: começou em Python (1.0.1, Tkinter), virou Java em 15/09/2026 porque o
@@ -17,8 +17,11 @@ nome da aba passou a ser procurado sem diferenciar maiúsculas de minúsculas.
 Os pull requests #1 e #2 juntaram tudo na `main` e a branch de trabalho foi
 apagada: **o trabalho acontece direto na `main`**, sem branch nem PR no meio.
 A 3.3.0 reformou a janela: campos agrupados, avisos em laranja e erros em
-vermelho no registro, barra de estado com o resumo da geração, botões "Abrir
-txt" e "Sobre", e o crédito do autor no rodapé.
+vermelho no registro, barra de estado com o resumo da geração e o crédito do
+autor. A 3.4.0 trouxe a faixa azul com o "by Ronald Lira" e três abas —
+**Gerar arquivo**, **Como funciona** e **Se der erro** — as duas últimas com o
+manual do programa dentro da própria janela (o botão "Sobre" saiu: a aba
+"Como funciona" faz o serviço).
 
 ## O que a macro fazia (fonte original guardado no chat)
 - `lDom` — varria a aba "Base" da linha 2 até a primeira linha com a coluna A
@@ -140,7 +143,14 @@ programa continua sem dependência nenhuma).
 ## Onde mexer
 - Layout, colunas, codificação, células de controle → `config.properties`.
 - Nome do autor e da empresa na janela → constantes `AUTOR` e `EMPRESA`.
-- Cores do registro e estado da tela → constantes `COR_*` da classe `Janela`.
+- Texto das abas de ajuda → `textoComoFunciona()` e `textoSeDerErro()`, no fim da
+  classe `Janela`. É HTML, e **o fonte não tem um único caractere fora do ASCII**:
+  acento entra como entidade (`&ccedil;`, `&atilde;`). Isso é de propósito — assim
+  o arquivo compila igual em qualquer máquina, com ou sem `-encoding UTF-8`. Para
+  reescrever o texto com acento de verdade e converter, existe o
+  `exemplo/gerar-ajuda.py`.
+- Cores da tela → constantes no alto da classe `Janela` (`AZUL`, `VERDE`,
+  `LARANJA`, `VERMELHO` e as versões `_FUNDO`).
 - O registro colorido é um `JTextPane`. Ele só quebra a linha entre palavras, e
   caminho de arquivo não tem espaço: por isso existem `KitQueQuebra`,
   `FabricaQueQuebra` e `RotuloQueQuebra` — sem eles o caminho passa da borda e

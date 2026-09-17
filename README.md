@@ -64,11 +64,16 @@ Abra o `config.properties` no Bloco de Notas. Os pontos que mais se mexe:
 
 ## Na janela
 
-Os campos de planilha e destino ficam juntos no alto, com as abas da planilha
-logo abaixo — é ali que se confere a grafia exata do nome da aba. O **Registro**
-mostra cada passo: avisos em laranja, erros em vermelho, o resultado em verde. A
-barra de estado resume a última geração (registros, bytes e quantos avisos), e o
-botão **Sobre** traz versão e autor.
+Três abas:
+
+- **Gerar arquivo** — a tela de trabalho: planilha, destino e o resultado. O campo
+  **Abas** mostra os nomes que existem de verdade na planilha, que é onde se
+  confere a grafia. O **Registro** colore cada linha: aviso em laranja, erro em
+  vermelho, resultado em verde. Embaixo, o resumo da última geração.
+- **Como funciona** — o manual, dentro do programa: o que ele faz, o que espera em
+  B6, B7, B9 e B10, o que espera na aba Base, o que sai no txt e como usar.
+- **Se der erro** — o que na planilha faz o programa parar e como resolver, o que
+  só gera aviso, e as quatro coisas que saem erradas **sem** aviso nenhum.
 
 Atalhos: `Enter` gera o arquivo, `Alt+T` abre o txt gerado, `Alt+P` abre a pasta,
 `Alt+R` recarrega o config.

@@ -47,7 +47,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import javax.swing.BorderFactory;
+import javax.swing.JComponent;
 import javax.swing.JButton;
+import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -77,7 +79,7 @@ import javax.xml.stream.XMLStreamReader;
  */
 public final class GeradorArquivo {
 
-    static final String VERSAO = "3.3.0";
+    static final String VERSAO = "3.4.0";
     static final String AUTOR = "Ronald Lira";
     static final String EMPRESA = "Triangulo Contabilidade";
     static final String NOME_CONFIG = "config.properties";
@@ -1151,11 +1153,18 @@ public final class GeradorArquivo {
 
         private static final long serialVersionUID = 1L;
 
-        private static final Color COR_DICA = new Color(105, 105, 105);
-        private static final Color COR_DESTAQUE = new Color(0, 60, 140);
-        private static final Color COR_AVISO = new Color(150, 85, 0);
-        private static final Color COR_ERRO = new Color(165, 20, 20);
-        private static final Color COR_OK = new Color(0, 105, 45);
+        // -------- paleta da tela (mexer aqui muda a cara do programa)
+        private static final Color AZUL_ESCURO = new Color(16, 46, 84);
+        private static final Color AZUL = new Color(29, 91, 154);
+        private static final Color AZUL_CLARO = new Color(176, 205, 232);
+        private static final Color FUNDO = new Color(247, 249, 252);
+        private static final Color CINZA_TEXTO = new Color(95, 105, 118);
+        private static final Color VERDE = new Color(0, 116, 62);
+        private static final Color VERDE_FUNDO = new Color(232, 244, 236);
+        private static final Color LARANJA = new Color(181, 101, 0);
+        private static final Color LARANJA_FUNDO = new Color(255, 246, 229);
+        private static final Color VERMELHO = new Color(176, 28, 28);
+        private static final Color VERMELHO_FUNDO = new Color(253, 235, 235);
 
         private final File arquivoConfig;
         private final JTextField campoPlanilha = new JTextField(28);
@@ -1168,61 +1177,145 @@ public final class GeradorArquivo {
         private final JButton botaoTxt = new JButton("Abrir txt");
         private final JButton botaoPasta = new JButton("Abrir pasta");
         private final JButton botaoRecarregar = new JButton("Recarregar config");
-        private final JButton botaoSobre = new JButton("Sobre");
         private transient Config cfg;
         private File ultimoArquivo;
 
         Janela(File arquivoConfig) {
-            super("Gerador de Arquivo TXT v" + VERSAO + " - " + AUTOR);
+            super("Gerador de Arquivo TXT v" + VERSAO + " - by " + AUTOR);
             this.arquivoConfig = arquivoConfig;
             setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            JPanel miolo = new JPanel(new BorderLayout(0, 8));
-            miolo.setBorder(BorderFactory.createEmptyBorder(12, 14, 10, 14));
-            miolo.add(montarCabecalho(), BorderLayout.NORTH);
-            miolo.add(montarCentro(), BorderLayout.CENTER);
+            JPanel miolo = new JPanel(new BorderLayout());
+            miolo.setBackground(FUNDO);
+            miolo.add(montarFaixa(), BorderLayout.NORTH);
+            miolo.add(montarAbas(), BorderLayout.CENTER);
             miolo.add(montarRodape(), BorderLayout.SOUTH);
             setContentPane(miolo);
             ligarBotoes();
             getRootPane().setDefaultButton(botaoGerar);
-            escrever("Gerador de Arquivo TXT v" + VERSAO, null);
+            escrever("Gerador de Arquivo TXT v" + VERSAO + " - by " + AUTOR, AZUL);
             carregarConfig();
             pack();
-            setMinimumSize(new Dimension(700, 520));
-            setSize(new Dimension(Math.min(Math.max(getWidth(), 780), 960),
-                    Math.max(getHeight(), 560)));
+            setMinimumSize(new Dimension(720, 540));
+            // nem menor que caber, nem maior que a tela do usuario
+            Dimension tela = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
+            int largura = Math.min(Math.max(getWidth(), 840), Math.max(840, tela.width - 80));
+            int altura = Math.min(Math.max(getHeight(), 620), Math.max(620, tela.height - 80));
+            setSize(new Dimension(largura, altura));
             setLocationRelativeTo(null);
         }
 
-        // -------- montagem da tela
+        // ------------------------------------------------------------------
+        // faixa colorida do alto
+        // ------------------------------------------------------------------
 
-        private JPanel montarCabecalho() {
-            JPanel painel = new JPanel(new BorderLayout());
-            JPanel textos = new JPanel(new GridBagLayout());
+        private JComponent montarFaixa() {
+            JPanel faixa = new JPanel(new GridBagLayout()) {
+                private static final long serialVersionUID = 1L;
+
+                @Override
+                protected void paintComponent(java.awt.Graphics g) {
+                    super.paintComponent(g);
+                    java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
+                    g2.setPaint(new java.awt.GradientPaint(0, 0, AZUL_ESCURO,
+                            getWidth(), getHeight(), AZUL));
+                    g2.fillRect(0, 0, getWidth(), getHeight());
+                    g2.dispose();
+                }
+            };
+            faixa.setBorder(BorderFactory.createEmptyBorder(10, 16, 10, 16));
+
             GridBagConstraints g = new GridBagConstraints();
             g.anchor = GridBagConstraints.WEST;
             g.gridx = 0;
             g.gridy = 0;
             JLabel titulo = new JLabel("Gerador de Arquivo TXT");
-            titulo.setFont(titulo.getFont().deriveFont(Font.BOLD, 19f));
-            textos.add(titulo, g);
+            titulo.setForeground(Color.WHITE);
+            titulo.setFont(titulo.getFont().deriveFont(Font.BOLD, 20f));
+            faixa.add(titulo, g);
+
             g.gridy = 1;
-            JLabel subtitulo = new JLabel("layout 6000/6100  -  substitui a macro lDom");
-            subtitulo.setForeground(COR_DICA);
-            textos.add(subtitulo, g);
-            painel.add(textos, BorderLayout.WEST);
-            return painel;
+            JLabel subtitulo = new JLabel("layout 6000/6100  -  no lugar das macros lDom, ISel"
+                    + " e Verifica_Arquivo");
+            subtitulo.setForeground(AZUL_CLARO);
+            faixa.add(subtitulo, g);
+
+            g.gridx = 1;
+            g.gridy = 0;
+            g.gridheight = 2;
+            g.weightx = 1;
+            g.anchor = GridBagConstraints.EAST;
+            JPanel credito = new JPanel(new GridBagLayout());
+            credito.setOpaque(false);
+            GridBagConstraints c = new GridBagConstraints();
+            c.gridx = 0;
+            c.gridy = 0;
+            c.anchor = GridBagConstraints.EAST;
+            JLabel porQuem = new JLabel("by " + AUTOR);
+            porQuem.setForeground(Color.WHITE);
+            porQuem.setFont(porQuem.getFont().deriveFont(Font.BOLD, 14f));
+            credito.add(porQuem, c);
+            c.gridy = 1;
+            JLabel empresa = new JLabel(EMPRESA);
+            empresa.setForeground(AZUL_CLARO);
+            credito.add(empresa, c);
+            c.gridy = 2;
+            JLabel versao = new JLabel("versao " + VERSAO);
+            versao.setForeground(AZUL_CLARO);
+            credito.add(versao, c);
+            faixa.add(credito, g);
+            return faixa;
         }
 
-        private JPanel montarCentro() {
+        // ------------------------------------------------------------------
+        // abas
+        // ------------------------------------------------------------------
+
+        private JComponent montarAbas() {
+            javax.swing.JTabbedPane abas = new javax.swing.JTabbedPane();
+            abas.setFont(abas.getFont().deriveFont(Font.BOLD));
+            abas.setBorder(BorderFactory.createEmptyBorder(8, 10, 4, 10));
+            abas.addTab("Gerar arquivo", montarPainelGerar());
+            abas.addTab("Como funciona", montarAjuda(textoComoFunciona()));
+            abas.addTab("Se der erro", montarAjuda(textoSeDerErro()));
+            abas.setToolTipTextAt(0, "A tela de trabalho: planilha, destino e o resultado.");
+            abas.setToolTipTextAt(1, "Explicacao do programa e o que ele espera na planilha.");
+            abas.setToolTipTextAt(2, "O que na planilha faz o programa parar, e como resolver.");
+            return abas;
+        }
+
+        private JComponent montarAjuda(String html) {
+            JEditorPane pagina = new JEditorPane();
+            pagina.setContentType("text/html");
+            pagina.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
+            pagina.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
+            pagina.setText(html);
+            pagina.setEditable(false);
+            pagina.setBackground(Color.WHITE);
+            pagina.setCaretPosition(0);
+            JScrollPane rolagem = new JScrollPane(pagina);
+            rolagem.setBorder(BorderFactory.createEmptyBorder());
+            rolagem.getVerticalScrollBar().setUnitIncrement(16);
+            // sem isto o texto todo entra na conta do pack() e a janela sai da tela
+            rolagem.setPreferredSize(new Dimension(680, 320));
+            return rolagem;
+        }
+
+        private JComponent montarPainelGerar() {
             JPanel painel = new JPanel(new BorderLayout(0, 8));
+            painel.setBackground(FUNDO);
+            painel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
             painel.add(montarEntrada(), BorderLayout.NORTH);
             painel.add(montarRegistro(), BorderLayout.CENTER);
+            painel.add(montarEstado(), BorderLayout.SOUTH);
             return painel;
         }
 
         private JPanel montarEntrada() {
             JPanel painel = new JPanel(new GridBagLayout());
-            painel.setBorder(BorderFactory.createTitledBorder("Planilha e destino"));
+            painel.setBackground(Color.WHITE);
+            painel.setBorder(BorderFactory.createCompoundBorder(
+                    quadro("Planilha e destino"),
+                    BorderFactory.createEmptyBorder(2, 6, 6, 8)));
             GridBagConstraints g = new GridBagConstraints();
             g.anchor = GridBagConstraints.WEST;
             g.insets = new Insets(3, 6, 3, 6);
@@ -1245,16 +1338,18 @@ public final class GeradorArquivo {
 
             g.gridy = 1;
             g.gridx = 0;
-            painel.add(new JLabel("Abas:"), g);
+            JLabel rotulo = new JLabel("Abas:");
+            rotulo.setForeground(CINZA_TEXTO);
+            painel.add(rotulo, g);
             g.gridx = 1;
             g.gridwidth = 2;
-            rotuloAbas.setForeground(COR_DESTAQUE);
+            rotuloAbas.setForeground(AZUL);
             painel.add(negrito(rotuloAbas), g);
 
             g.gridwidth = 1;
             g.gridy = 2;
             g.gridx = 0;
-            g.insets = new Insets(9, 6, 3, 6);
+            g.insets = new Insets(10, 6, 3, 6);
             painel.add(negrito(new JLabel("Salvar txt em:")), g);
             g.gridx = 1;
             g.fill = GridBagConstraints.HORIZONTAL;
@@ -1269,9 +1364,9 @@ public final class GeradorArquivo {
             g.gridy = 3;
             g.gridx = 1;
             g.gridwidth = 2;
-            g.insets = new Insets(0, 6, 6, 6);
+            g.insets = new Insets(0, 6, 4, 6);
             JLabel dica = new JLabel("em branco = usa a pasta (B9) e o nome (B10) da aba Principal");
-            dica.setForeground(COR_DICA);
+            dica.setForeground(CINZA_TEXTO);
             painel.add(dica, g);
 
             escolherPlanilha.addActionListener(new java.awt.event.ActionListener() {
@@ -1287,11 +1382,20 @@ public final class GeradorArquivo {
             return painel;
         }
 
-        private JPanel montarRegistro() {
-            JPanel painel = new JPanel(new BorderLayout(0, 4));
+        private JComponent montarRegistro() {
+            JPanel painel = new JPanel(new BorderLayout(0, 6));
+            painel.setBackground(FUNDO);
+
             JPanel linhaBotoes = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 6, 0));
+            linhaBotoes.setBackground(FUNDO);
             botaoGerar.setMnemonic('G');
             botaoGerar.setFont(botaoGerar.getFont().deriveFont(Font.BOLD));
+            botaoGerar.setBackground(AZUL);
+            botaoGerar.setForeground(Color.WHITE);
+            botaoGerar.setOpaque(true);
+            botaoGerar.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(AZUL_ESCURO),
+                    BorderFactory.createEmptyBorder(5, 14, 5, 14)));
             botaoTxt.setMnemonic('T');
             botaoPasta.setMnemonic('P');
             botaoRecarregar.setMnemonic('R');
@@ -1301,12 +1405,10 @@ public final class GeradorArquivo {
             botaoTxt.setToolTipText("Abre o txt gerado no programa padrao do Windows.");
             botaoPasta.setToolTipText("Abre a pasta onde o txt foi gravado.");
             botaoRecarregar.setToolTipText("Le de novo o config.properties, depois de voce edita-lo.");
-            botaoSobre.setToolTipText("Versao, autor e o que este programa substitui.");
             linhaBotoes.add(botaoGerar);
             linhaBotoes.add(botaoTxt);
             linhaBotoes.add(botaoPasta);
             linhaBotoes.add(botaoRecarregar);
-            linhaBotoes.add(botaoSobre);
             painel.add(linhaBotoes, BorderLayout.NORTH);
 
             registro.setEditorKit(new KitQueQuebra());
@@ -1316,42 +1418,45 @@ public final class GeradorArquivo {
             JScrollPane rolagem = new JScrollPane(registro,
                     JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                     JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-            rolagem.setBorder(BorderFactory.createTitledBorder("Registro"));
-            rolagem.setPreferredSize(new Dimension(660, 230));
+            rolagem.setBorder(quadro("Registro"));
+            rolagem.setPreferredSize(new Dimension(660, 220));
             painel.add(rolagem, BorderLayout.CENTER);
             return painel;
         }
 
+        private JComponent montarEstado() {
+            JPanel painel = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 8, 2));
+            painel.setBackground(FUNDO);
+            barra.setIndeterminate(true);
+            barra.setVisible(false);
+            barra.setPreferredSize(new Dimension(130, 14));
+            painel.add(barra);
+            rotuloEstado.setOpaque(true);
+            rotuloEstado.setBorder(BorderFactory.createEmptyBorder(3, 10, 3, 10));
+            painel.add(negrito(rotuloEstado));
+            estado("pronto", AZUL, AZUL_CLARO);
+            return painel;
+        }
+
+        /** Moldura com titulo colorido, usada nos dois blocos da tela. */
+        private static javax.swing.border.Border quadro(String titulo) {
+            javax.swing.border.TitledBorder borda = BorderFactory.createTitledBorder(
+                    BorderFactory.createLineBorder(AZUL_CLARO), titulo);
+            borda.setTitleColor(AZUL);
+            borda.setTitleFont(borda.getTitleFont().deriveFont(Font.BOLD));
+            return borda;
+        }
+
         private JPanel montarRodape() {
             JPanel painel = new JPanel(new GridBagLayout());
+            painel.setBackground(AZUL_ESCURO);
+            painel.setBorder(BorderFactory.createEmptyBorder(5, 16, 5, 16));
             GridBagConstraints g = new GridBagConstraints();
             g.gridx = 0;
             g.gridy = 0;
             g.anchor = GridBagConstraints.WEST;
-            g.fill = GridBagConstraints.HORIZONTAL;
-            g.weightx = 1;
-
-            barra.setIndeterminate(true);
-            barra.setVisible(false);
-            barra.setPreferredSize(new Dimension(120, 14));
-
-            JPanel estado = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 8, 0));
-            estado.add(barra);
-            rotuloEstado.setForeground(COR_DICA);
-            estado.add(rotuloEstado);
-            painel.add(estado, g);
-
-            g.gridy = 1;
-            g.insets = new Insets(6, 0, 0, 0);
-            painel.add(new javax.swing.JSeparator(), g);
-
-            g.gridy = 2;
-            g.insets = new Insets(4, 4, 0, 4);
-            g.weightx = 0;
-            g.fill = GridBagConstraints.NONE;
-            JLabel credito = new JLabel(AUTOR + "  -  " + EMPRESA);
-            credito.setForeground(COR_DICA);
-            credito.setToolTipText("Gerador de Arquivo TXT v" + VERSAO + " - " + AUTOR);
+            JLabel credito = new JLabel("by " + AUTOR + "  -  " + EMPRESA);
+            credito.setForeground(Color.WHITE);
             painel.add(negrito(credito), g);
 
             g.gridx = 1;
@@ -1360,7 +1465,7 @@ public final class GeradorArquivo {
             g.anchor = GridBagConstraints.EAST;
             String pasta = arquivoConfig.getAbsoluteFile().getParent();
             JLabel caminho = new JLabel("config e log em: " + pasta, JLabel.RIGHT);
-            caminho.setForeground(COR_DICA);
+            caminho.setForeground(AZUL_CLARO);
             caminho.setToolTipText(pasta);
             // um caminho comprido nao pode esticar a janela inteira
             caminho.setMinimumSize(new Dimension(1, caminho.getPreferredSize().height));
@@ -1395,14 +1500,11 @@ public final class GeradorArquivo {
                     abrir(ultimoArquivo);
                 }
             });
-            botaoSobre.addActionListener(new java.awt.event.ActionListener() {
-                public void actionPerformed(java.awt.event.ActionEvent e) {
-                    mostrarSobre();
-                }
-            });
         }
 
-        // -------- acoes
+        // ------------------------------------------------------------------
+        // acoes
+        // ------------------------------------------------------------------
 
         private void carregarConfig() {
             try {
@@ -1412,19 +1514,19 @@ public final class GeradorArquivo {
                 escrever("config lido de " + cfg.arquivo.getAbsolutePath(), null);
                 mostrarAbas();
                 botaoGerar.setEnabled(true);
-                estado("pronto", COR_DICA);
+                estado("pronto", AZUL, AZUL_CLARO);
             } catch (Exception e) {
                 LOG.log(Level.SEVERE, "falha ao ler o config", e);
-                escrever("ERRO: " + mensagem(e), COR_ERRO);
+                escrever("ERRO: " + mensagem(e), VERMELHO);
                 botaoGerar.setEnabled(false);
-                estado("config com problema", COR_ERRO);
+                estado("config com problema", VERMELHO, VERMELHO_FUNDO);
             }
         }
 
         private void mostrarAbas() {
             String caminho = campoPlanilha.getText().trim();
             if (vazio(caminho) || !new File(caminho).isFile()) {
-                rotuloAbas.setForeground(COR_ERRO);
+                rotuloAbas.setForeground(VERMELHO);
                 rotuloAbas.setText("planilha nao encontrada neste caminho");
                 return;
             }
@@ -1432,14 +1534,14 @@ public final class GeradorArquivo {
             try {
                 LeitorPlanilha leitor = new LeitorPlanilha(new File(caminho), avisos);
                 try {
-                    rotuloAbas.setForeground(COR_DESTAQUE);
+                    rotuloAbas.setForeground(AZUL);
                     rotuloAbas.setText(juntar(leitor.nomesDasAbas(), ", "));
                 } finally {
                     leitor.fechar();
                 }
             } catch (Exception e) {
                 LOG.log(Level.WARNING, "falha ao listar as abas", e);
-                rotuloAbas.setForeground(COR_ERRO);
+                rotuloAbas.setForeground(VERMELHO);
                 rotuloAbas.setText("nao consegui ler a planilha");
             }
         }
@@ -1482,7 +1584,7 @@ public final class GeradorArquivo {
             final String destino = campoDestino.getText().trim();
             botaoGerar.setEnabled(false);
             barra.setVisible(true);
-            estado("gerando...", COR_DICA);
+            estado("gerando...", AZUL, AZUL_CLARO);
             escrever("gerando...", null);
             new SwingWorker<Resultado, Void>() {
                 protected Resultado doInBackground() throws Exception {
@@ -1499,21 +1601,26 @@ public final class GeradorArquivo {
                     try {
                         Resultado r = get();
                         for (int i = 0; i < r.avisos.size(); i++) {
-                            escrever("AVISO: " + r.avisos.get(i), COR_AVISO);
+                            escrever("AVISO: " + r.avisos.get(i), LARANJA);
                         }
-                        escrever("pronto: " + r.registros + " registros, " + r.bytes + " bytes", COR_OK);
+                        escrever("pronto: " + r.registros + " registros, " + r.bytes + " bytes", VERDE);
                         escrever("arquivo: " + r.arquivo.getAbsolutePath(), null);
                         campoDestino.setText(r.arquivo.getAbsolutePath());
                         ultimoArquivo = r.arquivo;
                         botaoPasta.setEnabled(true);
                         botaoTxt.setEnabled(true);
-                        estado(r.registros + " registros, " + r.bytes + " bytes, "
-                                + r.avisos.size() + (r.avisos.size() == 1 ? " aviso" : " avisos"),
-                                r.avisos.isEmpty() ? COR_OK : COR_AVISO);
+                        String resumo = r.registros + " registros, " + r.bytes + " bytes, "
+                                + r.avisos.size() + (r.avisos.size() == 1 ? " aviso" : " avisos");
+                        if (r.avisos.isEmpty()) {
+                            estado(resumo, VERDE, VERDE_FUNDO);
+                        } else {
+                            estado(resumo, LARANJA, LARANJA_FUNDO);
+                        }
                     } catch (Exception e) {
                         LOG.log(Level.SEVERE, "falha ao gerar", e);
-                        escrever("ERRO: " + mensagem(e), COR_ERRO);
-                        estado("falhou - veja o registro", COR_ERRO);
+                        escrever("ERRO: " + mensagem(e), VERMELHO);
+                        estado("falhou - veja o Registro e a aba Se der erro", VERMELHO,
+                                VERMELHO_FUNDO);
                         JOptionPane.showMessageDialog(Janela.this, mensagem(e),
                                 "Gerador de Arquivo TXT", JOptionPane.ERROR_MESSAGE);
                     }
@@ -1554,33 +1661,22 @@ public final class GeradorArquivo {
                 if (Desktop.isDesktopSupported()) {
                     Desktop.getDesktop().open(alvo);
                 } else {
-                    escrever("ERRO: este Windows nao deixa o programa abrir arquivos.", COR_ERRO);
+                    escrever("ERRO: este Windows nao deixa o programa abrir arquivos.", VERMELHO);
                 }
             } catch (IOException e) {
                 LOG.log(Level.WARNING, "falha ao abrir " + alvo, e);
-                escrever("ERRO: nao consegui abrir " + alvo.getAbsolutePath(), COR_ERRO);
+                escrever("ERRO: nao consegui abrir " + alvo.getAbsolutePath(), VERMELHO);
             }
         }
 
-        private void mostrarSobre() {
-            String texto = "<html><div style='width:340px'>"
-                    + "<b>Gerador de Arquivo TXT</b> &nbsp; versao " + VERSAO + "<br><br>"
-                    + "Substitui as macros VBA lDom, ISel e Verifica_Arquivo: le a planilha e"
-                    + " grava o txt no layout 6000/6100.<br><br>"
-                    + "A planilha nunca e alterada - o programa so le.<br><br>"
-                    + "<b>" + AUTOR + "</b><br>" + EMPRESA + "<br><br>"
-                    + "Java " + System.getProperty("java.version", "?")
-                    + " &nbsp;-&nbsp; sem bibliotecas externas"
-                    + "</div></html>";
-            JOptionPane.showMessageDialog(this, new JLabel(texto), "Sobre",
-                    JOptionPane.INFORMATION_MESSAGE);
-        }
+        // ------------------------------------------------------------------
+        // registro e estado na tela
+        // ------------------------------------------------------------------
 
-        // -------- registro na tela
-
-        private void estado(String texto, Color cor) {
+        private void estado(String texto, Color cor, Color fundo) {
             rotuloEstado.setText(texto);
             rotuloEstado.setForeground(cor);
+            rotuloEstado.setBackground(fundo);
         }
 
         /** Escreve uma linha no registro. Cor nula = cor normal do texto. */
@@ -1599,7 +1695,208 @@ public final class GeradorArquivo {
             registro.setCaretPosition(documento.getLength());
         }
 
-        // -------- quebra de palavra comprida no registro
+        // ------------------------------------------------------------------
+        // texto das abas de ajuda
+        // ------------------------------------------------------------------
+
+        private static String textoComoFunciona() {
+            return ""
+                + "<html><body style='font-family:sans-serif; font-size:12px; margin:4px 10px 10px "
+                + "10px'> "
+                + "<h2 style='color:#102E54; margin-bottom:2px'>Gerador de Arquivo TXT</h2> "
+                + "<div style='color:#5F6976'>O que este programa faz, e o que ele espera encontrar na "
+                + "planilha.</div> "
+                + "<hr> "
+                + "<h3 style='color:#1D5B9A'>1. Para que ele serve</h3> "
+                + "<p>Ele faz o que as macros <b>lDom</b>, <b>ISel</b> e <b>Verifica_Arquivo</b> faziam: "
+                + "l&ecirc; a planilha e grava um arquivo de texto no layout <b>6000/6100</b>, pronto "
+                + "para "
+                + "ser importado no sistema.</p> "
+                + "<p>A diferen&ccedil;a &eacute; que a planilha agora pode ficar <b>limpa, sem macro "
+                + "nenhuma</b> &mdash; e "
+                + "assim a empresa pode desativar macros &agrave; vontade, que o trabalho continua "
+                + "saindo.</p> "
+                + "<p style='background:#E8F4EC; padding:6px'><b>O programa nunca escreve na "
+                + "planilha.</b> "
+                + "Ele s&oacute; l&ecirc;. Pode rodar com a planilha aberta que nada nela muda.</p> "
+                + "<h3 style='color:#1D5B9A'>2. O que ele espera na aba Principal</h3> "
+                + "<table cellpadding='4' cellspacing='0'> "
+                + "<tr><td><b>B6</b></td><td>obrigat&oacute;ria &mdash; se estiver vazia, o programa "
+                + "recusa gerar</td></tr> "
+                + "<tr><td><b>B7</b></td><td>obrigat&oacute;ria &mdash; mesma coisa</td></tr> "
+                + "<tr><td><b>B9</b></td><td>pasta onde salvar o txt</td></tr> "
+                + "<tr><td><b>B10</b></td><td>nome do arquivo, <b>sem</b> o <code>.txt</code></td></tr> "
+                + "</table> "
+                + "<p>B9 e B10 s&oacute; s&atilde;o usadas quando o campo <b>Salvar txt em</b> "
+                + "est&aacute; em branco. Se voc&ecirc; "
+                + "escolher o destino na tela, ele manda.</p> "
+                + "<h3 style='color:#1D5B9A'>3. O que ele espera na aba Base</h3> "
+                + "<p>Uma linha por registro, das colunas <b>A at&eacute; I</b>, come&ccedil;ando na "
+                + "<b>linha 2</b> &mdash; a "
+                + "linha 1 &eacute; o cabe&ccedil;alho e &eacute; ignorada. Cada linha preenchida "
+                + "vir&aacute; a ser um par de "
+                + "linhas no txt.</p> "
+                + "<p>Linha totalmente vazia no meio da Base &eacute; <b>pulada</b>, e a varredura "
+                + "continua at&eacute; o "
+                + "fim. A macro antiga parava na primeira vazia e cortava o arquivo pela metade; "
+                + "quem quiser o jeito antigo p&otilde;e <code>base.pararNaLinhaVazia=true</code> no "
+                + "config.</p> "
+                + "<h3 style='color:#1D5B9A'>4. O que sai no arquivo</h3> "
+                + "<p>Para cada linha da Base, duas linhas no txt:</p> "
+                + "<pre style='background:#F2F5F9; padding:6px; font-size:11px'>6000|X|||| "
+                + "6100|001|JO&Atilde;O ATACAD&Atilde;O LTDA|1234,5|31/01/2026|3|acordo|||FIM|</pre> "
+                + "<p>O arquivo come&ccedil;a com uma <b>linha em branco</b>, &eacute; gravado em "
+                + "<b>windows-1252</b> e "
+                + "quebra linha com <b>CRLF</b> &mdash; exatamente como o <code>Print #</code> do VBA "
+                + "fazia. Mudar "
+                + "qualquer uma dessas tr&ecirc;s coisas &eacute; mexer no config, n&atilde;o no "
+                + "programa.</p> "
+                + "<h3 style='color:#1D5B9A'>5. Como usar no dia a dia</h3> "
+                + "<ol> "
+                + "<li>Confira o caminho da <b>Planilha</b>. O campo <b>Abas</b> mostra os nomes que "
+                + "existem "
+                + "    de verdade no arquivo &mdash; serve de confer&ecirc;ncia.</li> "
+                + "<li>Deixe <b>Salvar txt em</b> em branco para usar B9 e B10, ou escolha o "
+                + "destino.</li> "
+                + "<li>Clique <b>Gerar arquivo</b> (ou aperte Enter).</li> "
+                + "<li>Leia o <b>Registro</b>. Laranja &eacute; aviso, vermelho &eacute; erro, verde "
+                + "&eacute; o resultado.</li> "
+                + "<li><b>Abrir txt</b> abre o arquivo gerado; <b>Abrir pasta</b> abre a pasta "
+                + "dele.</li> "
+                + "</ol> "
+                + "<h3 style='color:#1D5B9A'>6. Onde ficam as configura&ccedil;&otilde;es</h3> "
+                + "<p>Na mesma pasta do programa ficam o <b>config.properties</b> &mdash; caminhos, "
+                + "colunas, "
+                + "prefixos, codifica&ccedil;&atilde;o &mdash; e o <b>gerador_arquivo.log</b>, que "
+                + "guarda toda gera&ccedil;&atilde;o e "
+                + "todo erro, com data e hora. O caminho exato est&aacute; no p&eacute; desta "
+                + "janela.</p> "
+                + "<p>Depois de editar o config, clique <b>Recarregar config</b>: n&atilde;o precisa "
+                + "fechar o "
+                + "programa.</p> "
+                + "<h3 style='color:#1D5B9A'>7. Sem janela, para o agendador</h3> "
+                + "<p>O <code>gerar-agora.bat</code> gera o txt sem abrir nada, usando o config. "
+                + "&Eacute; o que se "
+                + "coloca no Agendador de Tarefas do Windows. Nesse caso deixe "
+                + "<code>saida.sobrescrever=sempre</code>, sen&atilde;o a segunda execu&ccedil;&atilde;o "
+                + "recusa gravar porque o "
+                + "arquivo do dia anterior ainda est&aacute; l&aacute;.</p> "
+                + "</body></html> ";
+        }
+
+        private static String textoSeDerErro() {
+            return ""
+                + "<html><body style='font-family:sans-serif; font-size:12px; margin:4px 10px 10px "
+                + "10px'> "
+                + "<h2 style='color:#102E54; margin-bottom:2px'>Se der erro</h2> "
+                + "<div style='color:#5F6976'>O que na planilha faz o programa parar, e o que s&oacute; "
+                + "muda o "
+                + "resultado sem avisar alto.</div> "
+                + "<hr> "
+                + "<h3 style='color:#B01C1C'>Faz o programa PARAR sem gerar nada</h3> "
+                + "<table cellpadding='5' cellspacing='0'> "
+                + "<tr style='background:#F2F5F9'><td><b>O que est&aacute; errado</b></td><td><b>O que "
+                + "fazer</b></td></tr> "
+                + "<tr><td><b>Planilha n&atilde;o est&aacute; no caminho</b> do config &mdash; "
+                + "algu&eacute;m moveu, renomeou "
+                + "    ou a rede caiu</td><td>clique <b>Selecionar...</b> e aponte o arquivo, ou corrija "
+                + "    <code>planilha.caminho</code></td></tr> "
+                + "<tr style='background:#FAFBFD'><td><b>Arquivo &eacute; .xls antigo</b> (formato "
+                + "bin&aacute;rio) ou "
+                + "    est&aacute; corrompido</td><td>abra no Excel e salve como <b>.xlsx</b> ou "
+                + "<b>.xlsm</b></td></tr> "
+                + "<tr><td><b>Aba Principal ou Base n&atilde;o existe</b> com esse nome &mdash; "
+                + "renomeada, com "
+                + "    espa&ccedil;o sobrando, ou escrita diferente</td><td>o erro lista as abas "
+                + "encontradas; "
+                + "    ajuste o nome no config. Mai&uacute;scula/min&uacute;scula o programa resolve "
+                + "sozinho e avisa</td></tr> "
+                + "<tr style='background:#FAFBFD'><td><b>B6 ou B7 vazias</b> na aba Principal</td> "
+                + "    <td>preencha as duas; s&atilde;o as c&eacute;lulas de controle que a macro "
+                + "tamb&eacute;m exigia</td></tr> "
+                + "<tr><td><b>Destino em branco na tela E B9/B10 vazias</b> na planilha</td> "
+                + "    <td>preencha B9 e B10, ou escolha o destino no campo <b>Salvar txt "
+                + "em</b></td></tr> "
+                + "<tr style='background:#FAFBFD'><td><b>Aba Base sem nenhuma linha preenchida</b> a "
+                + "partir "
+                + "    da linha 2</td><td>confira se os dados n&atilde;o foram colados em outra "
+                + "aba</td></tr> "
+                + "<tr><td><b>Caractere que n&atilde;o existe em windows-1252</b> &mdash; emoji, "
+                + "s&iacute;mbolo grego, "
+                + "    caractere colado de site</td><td>o erro diz a linha; apague o caractere na "
+                + "planilha. "
+                + "    Acento comum, &ccedil;, ~ e &deg; podem ficar: esses existem na tabela</td></tr> "
+                + "<tr style='background:#FAFBFD'><td><b>O txt j&aacute; existe</b> e o config "
+                + "est&aacute; em "
+                + "    <code>recusar</code></td><td>apague o txt antigo &mdash; &eacute; de "
+                + "prop&oacute;sito, era o que a macro "
+                + "    <b>Verifica_Arquivo</b> fazia. Para sobrescrever, mude para "
+                + "<code>perguntar</code> "
+                + "    ou <code>sempre</code></td></tr> "
+                + "<tr><td><b>Pasta de destino n&atilde;o existe e n&atilde;o pode ser criada</b> "
+                + "&mdash; unidade de rede "
+                + "    fora do ar, sem permiss&atilde;o</td><td>confira se o I: ou a pasta da rede "
+                + "est&aacute; "
+                + "    acess&iacute;vel</td></tr> "
+                + "</table> "
+                + "<h3 style='color:#B56500'>N&atilde;o para, mas muda o arquivo &mdash; sempre com "
+                + "aviso</h3> "
+                + "<ul> "
+                + "<li><b>F&oacute;rmula sem valor calculado.</b> O programa l&ecirc; o valor que "
+                + "est&aacute; gravado na "
+                + "    planilha, n&atilde;o recalcula nada. Planilha salva por outro programa pode vir "
+                + "sem "
+                + "    esse valor: abra no Excel, deixe calcular e salve. O campo sai vazio e o aviso "
+                + "    aparece.</li> "
+                + "<li><b>Barra vertical dentro do dado.</b> O <code>|</code> separa os campos, "
+                + "ent&atilde;o um "
+                + "    <code>|</code> digitado no meio do nome quebraria o layout. Ele &eacute; trocado "
+                + "por "
+                + "    espa&ccedil;o e o aviso diz em qual c&eacute;lula.</li> "
+                + "<li><b>Coluna A vazia com dados no resto da linha.</b> A linha &eacute; gravada e o "
+                + "aviso "
+                + "    pede confer&ecirc;ncia &mdash; pode ser dado colado na linha errada.</li> "
+                + "<li><b>Nome da aba com outra caixa</b> (PRINCIPAL x Principal). Funciona, mas o aviso "
+                + "    fica aparecendo at&eacute; o config bater com o nome de verdade.</li> "
+                + "</ul> "
+                + "<h3 style='color:#00743E'>N&atilde;o avisa nada, e &eacute; onde mora o perigo</h3> "
+                + "<p>Estas quatro coisas geram um arquivo <i>perfeito</i> &mdash; com o conte&uacute;do "
+                + "errado. Vale "
+                + "conferir na primeira vez:</p> "
+                + "<ul> "
+                + "<li><b>M&aacute;scara n&atilde;o vai para o txt, o valor vai.</b> C&eacute;lula que "
+                + "mostra "
+                + "    <b>1.234,50</b> tem valor 1234,5 e &eacute; <b>1234,5</b> que sai. Era o que o "
+                + "VBA "
+                + "    gravava. Se o sistema exige duas casas sempre, isso tem de ser tratado.</li> "
+                + "<li><b>Data tem de ser data de verdade.</b> Se a data foi digitada como texto, sai "
+                + "    exatamente como est&aacute; escrita &mdash; <b>31.01.26</b> continua "
+                + "<b>31.01.26</b>. E se a "
+                + "    c&eacute;lula tem data mas est&aacute; formatada como Geral, sai o n&uacute;mero "
+                + "de s&eacute;rie do Excel "
+                + "    (<b>46053</b>) em vez da data.</li> "
+                + "<li><b>C&eacute;lula mesclada</b> guarda o valor s&oacute; na primeira c&eacute;lula; "
+                + "as outras v&ecirc;m "
+                + "    vazias, e &eacute; isso que vai para o arquivo.</li> "
+                + "<li><b>Linha oculta ou escondida por filtro &eacute; lida igual.</b> O filtro "
+                + "&eacute; enfeite de "
+                + "    tela: para o programa, a linha est&aacute; l&aacute;.</li> "
+                + "</ul> "
+                + "<p style='background:#FFF6E5; padding:6px'><b>Espa&ccedil;o sobrando no fim do texto "
+                + "tamb&eacute;m "
+                + "vai para o arquivo</b>, porque o programa grava o que est&aacute; na c&eacute;lula, "
+                + "sem aparar.</p> "
+                + "<h3 style='color:#1D5B9A'>Quando nada disso explicar</h3> "
+                + "<p>O <b>gerador_arquivo.log</b>, na pasta do programa, guarda o erro completo com "
+                + "data e "
+                + "hora. &Eacute; o arquivo que resolve a d&uacute;vida &mdash; mande ele junto ao pedir "
+                + "ajuda.</p> "
+                + "</body></html> ";
+        }
+
+        // ------------------------------------------------------------------
+        // quebra de palavra comprida no registro
+        // ------------------------------------------------------------------
         //
         // O JTextPane so quebra a linha entre palavras, e um caminho de arquivo
         // nao tem espaco nenhum: o caminho passava da borda e sumia. Trocar o
