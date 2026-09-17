@@ -1,0 +1,41 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "1. compilar (javac --release 8 + jar + conferir)",
+      "detail": "O rito inteiro. E este que tem de passar antes de entregar.",
+      "type": "shell",
+      "command": "${workspaceFolder}\\compilar.bat",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": "$javac",
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "2. conferir o txt contra o gabarito",
+      "detail": "Gera o txt da planilha-exemplo e compara byte a byte (fc /b).",
+      "type": "shell",
+      "command": "${workspaceFolder}\\exemplo\\conferir.bat",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "3. gerar o txt de verdade (sem janela)",
+      "detail": "Usa a planilha e o destino do config.properties.",
+      "type": "shell",
+      "command": "java -jar \"${workspaceFolder}\\gerador-arquivo-txt.jar\" --console",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "4. abrir a janela",
+      "type": "shell",
+      "command": "${workspaceFolder}\\rodar.bat",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "silent", "panel": "dedicated" }
+    }
+  ]
+}
