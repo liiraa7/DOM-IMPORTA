@@ -6,7 +6,7 @@ e `ISel` de uma planilha do escritório. A empresa remove/desativa macros com
 frequência, obrigando a refazer o processo na mão. Agora a planilha fica limpa:
 o programa apenas LÊ o arquivo e escreve o txt no layout 6000/6100.
 
-Versão atual: **3.2.3**. Classe única `GeradorArquivo.java`
+Versão atual: **3.3.0**. Autor: **Ronald Lira** (Triangulo Contabilidade). Classe única `GeradorArquivo.java`
 (pacote `br.com.triangulo.gerador`), **sem dependência externa**.
 
 Histórico: começou em Python (1.0.1, Tkinter), virou Java em 15/09/2026 porque o
@@ -16,6 +16,9 @@ Em 17/09/2026 o projeto entrou no git (repositório `liiraa7/DOM-IMPORTA`) e o
 nome da aba passou a ser procurado sem diferenciar maiúsculas de minúsculas.
 Os pull requests #1 e #2 juntaram tudo na `main` e a branch de trabalho foi
 apagada: **o trabalho acontece direto na `main`**, sem branch nem PR no meio.
+A 3.3.0 reformou a janela: campos agrupados, avisos em laranja e erros em
+vermelho no registro, barra de estado com o resumo da geração, botões "Abrir
+txt" e "Sobre", e o crédito do autor no rodapé.
 
 ## O que a macro fazia (fonte original guardado no chat)
 - `lDom` — varria a aba "Base" da linha 2 até a primeira linha com a coluna A
@@ -136,6 +139,13 @@ programa continua sem dependência nenhuma).
 
 ## Onde mexer
 - Layout, colunas, codificação, células de controle → `config.properties`.
+- Nome do autor e da empresa na janela → constantes `AUTOR` e `EMPRESA`.
+- Cores do registro e estado da tela → constantes `COR_*` da classe `Janela`.
+- O registro colorido é um `JTextPane`. Ele só quebra a linha entre palavras, e
+  caminho de arquivo não tem espaço: por isso existem `KitQueQuebra`,
+  `FabricaQueQuebra` e `RotuloQueQuebra` — sem eles o caminho passa da borda e
+  desaparece. Não trocar por `JTextArea` (perde a cor) nem tirar o kit (volta a
+  esconder o fim do caminho).
 - Regra nova de formatação (zeros à esquerda, campo de tamanho fixo) →
   `GeradorArquivo.formatarNumero()`, aí recompila.
 - Data com outro formato → `LeitorPlanilha.formatarData()`.

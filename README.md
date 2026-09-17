@@ -62,6 +62,17 @@ Abra o `config.properties` no Bloco de Notas. Os pontos que mais se mexe:
 > barra normal (`C:/pasta`) ou dupla (`C:\\pasta`). Barra simples engole o
 > caractere seguinte em silêncio.
 
+## Na janela
+
+Os campos de planilha e destino ficam juntos no alto, com as abas da planilha
+logo abaixo — é ali que se confere a grafia exata do nome da aba. O **Registro**
+mostra cada passo: avisos em laranja, erros em vermelho, o resultado em verde. A
+barra de estado resume a última geração (registros, bytes e quantos avisos), e o
+botão **Sobre** traz versão e autor.
+
+Atalhos: `Enter` gera o arquivo, `Alt+T` abre o txt gerado, `Alt+P` abre a pasta,
+`Alt+R` recarrega o config.
+
 ## O que o programa avisa em vez de esconder
 
 - Célula com fórmula sem valor calculado (a planilha precisa ser aberta e salva).
@@ -84,3 +95,7 @@ CLAUDE.md                                          briefing e regras do projeto
 
 Antes de mexer no código, leia o `CLAUDE.md`: ele tem as regras da casa (Java 8,
 classe única, zero dependência) e as armadilhas que já custaram caro.
+
+---
+
+Feito por **Ronald Lira** — Triangulo Contabilidade.

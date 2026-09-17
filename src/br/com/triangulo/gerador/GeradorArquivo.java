@@ -53,9 +53,10 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.UIManager;
@@ -76,7 +77,9 @@ import javax.xml.stream.XMLStreamReader;
  */
 public final class GeradorArquivo {
 
-    static final String VERSAO = "3.2.3";
+    static final String VERSAO = "3.3.0";
+    static final String AUTOR = "Ronald Lira";
+    static final String EMPRESA = "Triangulo Contabilidade";
     static final String NOME_CONFIG = "config.properties";
     static final String NOME_LOG = "gerador_arquivo.log";
 
@@ -118,7 +121,7 @@ public final class GeradorArquivo {
     }
 
     private static void imprimirAjuda() {
-        System.out.println("Gerador de Arquivo TXT v" + VERSAO);
+        System.out.println("Gerador de Arquivo TXT v" + VERSAO + " - " + AUTOR);
         System.out.println("  (sem argumento)     abre a janela");
         System.out.println("  --console           gera o txt sem janela, usando o config.properties");
         System.out.println("  --config <arquivo>  usa outro config.properties");
@@ -127,7 +130,7 @@ public final class GeradorArquivo {
     private static int executarConsole(File arquivoConfig) {
         try {
             Config cfg = Config.carregar(arquivoConfig);
-            System.out.println("Gerador de Arquivo TXT v" + VERSAO + " (console)");
+            System.out.println("Gerador de Arquivo TXT v" + VERSAO + " - " + AUTOR + " (console)");
             System.out.println("config   = " + cfg.arquivo.getAbsolutePath());
             System.out.println("planilha = " + cfg.planilhaCaminho);
             Resultado r = gerar(cfg, cfg.saidaDestino, new Confirmacao() {
@@ -1148,117 +1151,128 @@ public final class GeradorArquivo {
 
         private static final long serialVersionUID = 1L;
 
+        private static final Color COR_DICA = new Color(105, 105, 105);
+        private static final Color COR_DESTAQUE = new Color(0, 60, 140);
+        private static final Color COR_AVISO = new Color(150, 85, 0);
+        private static final Color COR_ERRO = new Color(165, 20, 20);
+        private static final Color COR_OK = new Color(0, 105, 45);
+
         private final File arquivoConfig;
-        private final JTextField campoPlanilha = new JTextField(34);
-        private final JTextField campoDestino = new JTextField(34);
+        private final JTextField campoPlanilha = new JTextField(28);
+        private final JTextField campoDestino = new JTextField(28);
         private final JLabel rotuloAbas = new JLabel(" ");
-        private final JTextArea areaLog = new JTextArea();
+        private final JTextPane registro = new JTextPane();
+        private final JProgressBar barra = new JProgressBar();
+        private final JLabel rotuloEstado = new JLabel("pronto");
         private final JButton botaoGerar = new JButton("Gerar arquivo");
+        private final JButton botaoTxt = new JButton("Abrir txt");
         private final JButton botaoPasta = new JButton("Abrir pasta");
         private final JButton botaoRecarregar = new JButton("Recarregar config");
+        private final JButton botaoSobre = new JButton("Sobre");
         private transient Config cfg;
         private File ultimoArquivo;
 
         Janela(File arquivoConfig) {
-            super("Gerador de Arquivo TXT");
+            super("Gerador de Arquivo TXT v" + VERSAO + " - " + AUTOR);
             this.arquivoConfig = arquivoConfig;
             setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            setLayout(new BorderLayout(0, 0));
-            add(montarTopo(), BorderLayout.NORTH);
-            add(montarLog(), BorderLayout.CENTER);
-            add(montarRodape(), BorderLayout.SOUTH);
+            JPanel miolo = new JPanel(new BorderLayout(0, 8));
+            miolo.setBorder(BorderFactory.createEmptyBorder(12, 14, 10, 14));
+            miolo.add(montarCabecalho(), BorderLayout.NORTH);
+            miolo.add(montarCentro(), BorderLayout.CENTER);
+            miolo.add(montarRodape(), BorderLayout.SOUTH);
+            setContentPane(miolo);
             ligarBotoes();
-            escrever("Gerador de Arquivo TXT v" + VERSAO);
+            getRootPane().setDefaultButton(botaoGerar);
+            escrever("Gerador de Arquivo TXT v" + VERSAO, null);
             carregarConfig();
             pack();
-            setMinimumSize(new Dimension(680, 520));
-            setSize(new Dimension(Math.min(Math.max(getWidth(), 800), 980), Math.max(getHeight(), 560)));
+            setMinimumSize(new Dimension(700, 520));
+            setSize(new Dimension(Math.min(Math.max(getWidth(), 780), 960),
+                    Math.max(getHeight(), 560)));
             setLocationRelativeTo(null);
         }
 
-        private JPanel montarTopo() {
-            JPanel painel = new JPanel(new GridBagLayout());
-            painel.setBorder(BorderFactory.createEmptyBorder(12, 14, 6, 14));
-            GridBagConstraints g = new GridBagConstraints();
-            g.insets = new Insets(2, 2, 2, 2);
-            g.anchor = GridBagConstraints.WEST;
+        // -------- montagem da tela
 
-            JLabel titulo = new JLabel("Gerador de Arquivo TXT");
-            titulo.setFont(titulo.getFont().deriveFont(Font.BOLD, 20f));
+        private JPanel montarCabecalho() {
+            JPanel painel = new JPanel(new BorderLayout());
+            JPanel textos = new JPanel(new GridBagLayout());
+            GridBagConstraints g = new GridBagConstraints();
+            g.anchor = GridBagConstraints.WEST;
             g.gridx = 0;
             g.gridy = 0;
-            g.gridwidth = 3;
-            painel.add(titulo, g);
-
-            JLabel subtitulo = new JLabel("layout 6000/6100  |  substitui a macro lDom");
-            subtitulo.setForeground(Color.GRAY);
+            JLabel titulo = new JLabel("Gerador de Arquivo TXT");
+            titulo.setFont(titulo.getFont().deriveFont(Font.BOLD, 19f));
+            textos.add(titulo, g);
             g.gridy = 1;
-            painel.add(subtitulo, g);
+            JLabel subtitulo = new JLabel("layout 6000/6100  -  substitui a macro lDom");
+            subtitulo.setForeground(COR_DICA);
+            textos.add(subtitulo, g);
+            painel.add(textos, BorderLayout.WEST);
+            return painel;
+        }
 
-            g.gridwidth = 1;
-            g.gridy = 2;
+        private JPanel montarCentro() {
+            JPanel painel = new JPanel(new BorderLayout(0, 8));
+            painel.add(montarEntrada(), BorderLayout.NORTH);
+            painel.add(montarRegistro(), BorderLayout.CENTER);
+            return painel;
+        }
+
+        private JPanel montarEntrada() {
+            JPanel painel = new JPanel(new GridBagLayout());
+            painel.setBorder(BorderFactory.createTitledBorder("Planilha e destino"));
+            GridBagConstraints g = new GridBagConstraints();
+            g.anchor = GridBagConstraints.WEST;
+            g.insets = new Insets(3, 6, 3, 6);
+
+            JButton escolherPlanilha = new JButton("Selecionar...");
+            JButton escolherDestino = new JButton("Selecionar...");
+
+            g.gridy = 0;
             g.gridx = 0;
-            g.insets = new Insets(12, 2, 2, 8);
             painel.add(negrito(new JLabel("Planilha:")), g);
-            g.insets = new Insets(12, 2, 2, 2);
             g.gridx = 1;
             g.fill = GridBagConstraints.HORIZONTAL;
             g.weightx = 1;
+            campoPlanilha.setToolTipText("Caminho do .xlsx ou .xlsm. O programa so le este arquivo.");
             painel.add(campoPlanilha, g);
             g.fill = GridBagConstraints.NONE;
             g.weightx = 0;
             g.gridx = 2;
-            JButton escolherPlanilha = new JButton("Selecionar...");
             painel.add(escolherPlanilha, g);
 
-            g.insets = new Insets(2, 2, 2, 8);
-            g.gridy = 3;
+            g.gridy = 1;
             g.gridx = 0;
+            painel.add(new JLabel("Abas:"), g);
+            g.gridx = 1;
+            g.gridwidth = 2;
+            rotuloAbas.setForeground(COR_DESTAQUE);
+            painel.add(negrito(rotuloAbas), g);
+
+            g.gridwidth = 1;
+            g.gridy = 2;
+            g.gridx = 0;
+            g.insets = new Insets(9, 6, 3, 6);
             painel.add(negrito(new JLabel("Salvar txt em:")), g);
-            g.insets = new Insets(2, 2, 2, 2);
             g.gridx = 1;
             g.fill = GridBagConstraints.HORIZONTAL;
             g.weightx = 1;
+            campoDestino.setToolTipText("Deixe em branco para usar a pasta e o nome da aba Principal.");
             painel.add(campoDestino, g);
             g.fill = GridBagConstraints.NONE;
             g.weightx = 0;
             g.gridx = 2;
-            JButton escolherDestino = new JButton("Selecionar...");
             painel.add(escolherDestino, g);
 
+            g.gridy = 3;
+            g.gridx = 1;
+            g.gridwidth = 2;
+            g.insets = new Insets(0, 6, 6, 6);
             JLabel dica = new JLabel("em branco = usa a pasta (B9) e o nome (B10) da aba Principal");
-            dica.setForeground(Color.GRAY);
-            g.gridy = 4;
-            g.gridx = 1;
-            g.gridwidth = 2;
+            dica.setForeground(COR_DICA);
             painel.add(dica, g);
-
-            g.gridwidth = 1;
-            g.gridy = 5;
-            g.gridx = 0;
-            g.insets = new Insets(8, 2, 2, 8);
-            painel.add(negrito(new JLabel("Abas:")), g);
-            g.gridx = 1;
-            g.gridwidth = 2;
-            g.insets = new Insets(8, 2, 2, 2);
-            rotuloAbas.setForeground(new Color(0, 60, 140));
-            painel.add(negrito(rotuloAbas), g);
-
-            JPanel botoes = new JPanel(new GridBagLayout());
-            GridBagConstraints b = new GridBagConstraints();
-            b.insets = new Insets(0, 0, 0, 6);
-            b.gridy = 0;
-            b.gridx = 0;
-            botoes.add(botaoGerar, b);
-            b.gridx = 1;
-            botoes.add(botaoPasta, b);
-            b.gridx = 2;
-            botoes.add(botaoRecarregar, b);
-            g.gridy = 6;
-            g.gridx = 0;
-            g.gridwidth = 3;
-            g.insets = new Insets(12, 0, 2, 2);
-            painel.add(botoes, g);
 
             escolherPlanilha.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
@@ -1270,38 +1284,94 @@ public final class GeradorArquivo {
                     escolherDestino();
                 }
             });
+            return painel;
+        }
+
+        private JPanel montarRegistro() {
+            JPanel painel = new JPanel(new BorderLayout(0, 4));
+            JPanel linhaBotoes = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 6, 0));
+            botaoGerar.setMnemonic('G');
+            botaoGerar.setFont(botaoGerar.getFont().deriveFont(Font.BOLD));
+            botaoTxt.setMnemonic('T');
+            botaoPasta.setMnemonic('P');
+            botaoRecarregar.setMnemonic('R');
+            botaoTxt.setEnabled(false);
             botaoPasta.setEnabled(false);
+            botaoGerar.setToolTipText("Le a planilha e grava o txt. Atalho: Enter");
+            botaoTxt.setToolTipText("Abre o txt gerado no programa padrao do Windows.");
+            botaoPasta.setToolTipText("Abre a pasta onde o txt foi gravado.");
+            botaoRecarregar.setToolTipText("Le de novo o config.properties, depois de voce edita-lo.");
+            botaoSobre.setToolTipText("Versao, autor e o que este programa substitui.");
+            linhaBotoes.add(botaoGerar);
+            linhaBotoes.add(botaoTxt);
+            linhaBotoes.add(botaoPasta);
+            linhaBotoes.add(botaoRecarregar);
+            linhaBotoes.add(botaoSobre);
+            painel.add(linhaBotoes, BorderLayout.NORTH);
+
+            registro.setEditorKit(new KitQueQuebra());
+            registro.setEditable(false);
+            registro.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+            registro.setMargin(new Insets(6, 8, 6, 8));
+            JScrollPane rolagem = new JScrollPane(registro,
+                    JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                    JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+            rolagem.setBorder(BorderFactory.createTitledBorder("Registro"));
+            rolagem.setPreferredSize(new Dimension(660, 230));
+            painel.add(rolagem, BorderLayout.CENTER);
+            return painel;
+        }
+
+        private JPanel montarRodape() {
+            JPanel painel = new JPanel(new GridBagLayout());
+            GridBagConstraints g = new GridBagConstraints();
+            g.gridx = 0;
+            g.gridy = 0;
+            g.anchor = GridBagConstraints.WEST;
+            g.fill = GridBagConstraints.HORIZONTAL;
+            g.weightx = 1;
+
+            barra.setIndeterminate(true);
+            barra.setVisible(false);
+            barra.setPreferredSize(new Dimension(120, 14));
+
+            JPanel estado = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 8, 0));
+            estado.add(barra);
+            rotuloEstado.setForeground(COR_DICA);
+            estado.add(rotuloEstado);
+            painel.add(estado, g);
+
+            g.gridy = 1;
+            g.insets = new Insets(6, 0, 0, 0);
+            painel.add(new javax.swing.JSeparator(), g);
+
+            g.gridy = 2;
+            g.insets = new Insets(4, 4, 0, 4);
+            g.weightx = 0;
+            g.fill = GridBagConstraints.NONE;
+            JLabel credito = new JLabel(AUTOR + "  -  " + EMPRESA);
+            credito.setForeground(COR_DICA);
+            credito.setToolTipText("Gerador de Arquivo TXT v" + VERSAO + " - " + AUTOR);
+            painel.add(negrito(credito), g);
+
+            g.gridx = 1;
+            g.weightx = 1;
+            g.fill = GridBagConstraints.HORIZONTAL;
+            g.anchor = GridBagConstraints.EAST;
+            String pasta = arquivoConfig.getAbsoluteFile().getParent();
+            JLabel caminho = new JLabel("config e log em: " + pasta, JLabel.RIGHT);
+            caminho.setForeground(COR_DICA);
+            caminho.setToolTipText(pasta);
+            // um caminho comprido nao pode esticar a janela inteira
+            caminho.setMinimumSize(new Dimension(1, caminho.getPreferredSize().height));
+            caminho.setPreferredSize(new Dimension(1, caminho.getPreferredSize().height));
+            painel.add(caminho, g);
             return painel;
         }
 
         private static JLabel negrito(JLabel rotulo) {
             rotulo.setFont(rotulo.getFont().deriveFont(Font.BOLD));
             return rotulo;
-        }
-
-        private JScrollPane montarLog() {
-            areaLog.setEditable(false);
-            areaLog.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
-            areaLog.setLineWrap(true);
-            areaLog.setWrapStyleWord(true);
-            JScrollPane rolagem = new JScrollPane(areaLog);
-            rolagem.setBorder(BorderFactory.createEmptyBorder(6, 14, 6, 14));
-            rolagem.setPreferredSize(new Dimension(640, 260));
-            return rolagem;
-        }
-
-        private JPanel montarRodape() {
-            JPanel painel = new JPanel(new BorderLayout());
-            painel.setBorder(BorderFactory.createEmptyBorder(2, 14, 10, 14));
-            String pasta = arquivoConfig.getAbsoluteFile().getParent();
-            JLabel rotulo = new JLabel(NOME_CONFIG + " e " + NOME_LOG + " ficam em: " + pasta);
-            rotulo.setForeground(Color.DARK_GRAY);
-            rotulo.setToolTipText(pasta);
-            // um caminho comprido nao pode esticar a janela inteira
-            rotulo.setMinimumSize(new Dimension(1, rotulo.getPreferredSize().height));
-            rotulo.setPreferredSize(new Dimension(1, rotulo.getPreferredSize().height));
-            painel.add(rotulo, BorderLayout.CENTER);
-            return painel;
         }
 
         private void ligarBotoes() {
@@ -1317,42 +1387,59 @@ public final class GeradorArquivo {
             });
             botaoPasta.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
-                    abrirPasta();
+                    abrir(ultimoArquivo == null ? null : ultimoArquivo.getAbsoluteFile().getParentFile());
+                }
+            });
+            botaoTxt.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    abrir(ultimoArquivo);
+                }
+            });
+            botaoSobre.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    mostrarSobre();
                 }
             });
         }
+
+        // -------- acoes
 
         private void carregarConfig() {
             try {
                 cfg = Config.carregar(arquivoConfig);
                 campoPlanilha.setText(cfg.planilhaCaminho);
                 campoDestino.setText(cfg.saidaDestino);
-                escrever("config lido de " + cfg.arquivo.getAbsolutePath());
+                escrever("config lido de " + cfg.arquivo.getAbsolutePath(), null);
                 mostrarAbas();
                 botaoGerar.setEnabled(true);
+                estado("pronto", COR_DICA);
             } catch (Exception e) {
                 LOG.log(Level.SEVERE, "falha ao ler o config", e);
-                escrever("ERRO: " + mensagem(e));
+                escrever("ERRO: " + mensagem(e), COR_ERRO);
                 botaoGerar.setEnabled(false);
+                estado("config com problema", COR_ERRO);
             }
         }
 
         private void mostrarAbas() {
             String caminho = campoPlanilha.getText().trim();
             if (vazio(caminho) || !new File(caminho).isFile()) {
-                rotuloAbas.setText("planilha nao encontrada");
+                rotuloAbas.setForeground(COR_ERRO);
+                rotuloAbas.setText("planilha nao encontrada neste caminho");
                 return;
             }
             List<String> avisos = new ArrayList<String>();
             try {
                 LeitorPlanilha leitor = new LeitorPlanilha(new File(caminho), avisos);
                 try {
+                    rotuloAbas.setForeground(COR_DESTAQUE);
                     rotuloAbas.setText(juntar(leitor.nomesDasAbas(), ", "));
                 } finally {
                     leitor.fechar();
                 }
             } catch (Exception e) {
                 LOG.log(Level.WARNING, "falha ao listar as abas", e);
+                rotuloAbas.setForeground(COR_ERRO);
                 rotuloAbas.setText("nao consegui ler a planilha");
             }
         }
@@ -1364,8 +1451,7 @@ public final class GeradorArquivo {
                     "xlsx", "xlsm"));
             String atual = campoPlanilha.getText().trim();
             if (!vazio(atual)) {
-                File arquivo = new File(atual);
-                seletor.setCurrentDirectory(arquivo.getParentFile());
+                seletor.setCurrentDirectory(new File(atual).getParentFile());
             }
             if (seletor.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
                 campoPlanilha.setText(seletor.getSelectedFile().getAbsolutePath());
@@ -1395,7 +1481,9 @@ public final class GeradorArquivo {
             cfg.planilhaCaminho = campoPlanilha.getText().trim();
             final String destino = campoDestino.getText().trim();
             botaoGerar.setEnabled(false);
-            escrever("gerando...");
+            barra.setVisible(true);
+            estado("gerando...", COR_DICA);
+            escrever("gerando...", null);
             new SwingWorker<Resultado, Void>() {
                 protected Resultado doInBackground() throws Exception {
                     return gerar(cfg, destino, new Confirmacao() {
@@ -1407,19 +1495,25 @@ public final class GeradorArquivo {
 
                 protected void done() {
                     botaoGerar.setEnabled(true);
+                    barra.setVisible(false);
                     try {
                         Resultado r = get();
                         for (int i = 0; i < r.avisos.size(); i++) {
-                            escrever("AVISO: " + r.avisos.get(i));
+                            escrever("AVISO: " + r.avisos.get(i), COR_AVISO);
                         }
-                        escrever("pronto: " + r.registros + " registros, " + r.bytes + " bytes");
-                        escrever("arquivo: " + r.arquivo.getAbsolutePath());
+                        escrever("pronto: " + r.registros + " registros, " + r.bytes + " bytes", COR_OK);
+                        escrever("arquivo: " + r.arquivo.getAbsolutePath(), null);
                         campoDestino.setText(r.arquivo.getAbsolutePath());
                         ultimoArquivo = r.arquivo;
                         botaoPasta.setEnabled(true);
+                        botaoTxt.setEnabled(true);
+                        estado(r.registros + " registros, " + r.bytes + " bytes, "
+                                + r.avisos.size() + (r.avisos.size() == 1 ? " aviso" : " avisos"),
+                                r.avisos.isEmpty() ? COR_OK : COR_AVISO);
                     } catch (Exception e) {
                         LOG.log(Level.SEVERE, "falha ao gerar", e);
-                        escrever("ERRO: " + mensagem(e));
+                        escrever("ERRO: " + mensagem(e), COR_ERRO);
+                        estado("falhou - veja o registro", COR_ERRO);
                         JOptionPane.showMessageDialog(Janela.this, mensagem(e),
                                 "Gerador de Arquivo TXT", JOptionPane.ERROR_MESSAGE);
                     }
@@ -1452,24 +1546,112 @@ public final class GeradorArquivo {
             return resposta[0];
         }
 
-        private void abrirPasta() {
-            if (ultimoArquivo == null) {
+        private void abrir(File alvo) {
+            if (alvo == null) {
                 return;
             }
-            File pasta = ultimoArquivo.getAbsoluteFile().getParentFile();
             try {
-                if (pasta != null && Desktop.isDesktopSupported()) {
-                    Desktop.getDesktop().open(pasta);
+                if (Desktop.isDesktopSupported()) {
+                    Desktop.getDesktop().open(alvo);
+                } else {
+                    escrever("ERRO: este Windows nao deixa o programa abrir arquivos.", COR_ERRO);
                 }
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "falha ao abrir a pasta", e);
-                escrever("ERRO: nao consegui abrir " + pasta);
+                LOG.log(Level.WARNING, "falha ao abrir " + alvo, e);
+                escrever("ERRO: nao consegui abrir " + alvo.getAbsolutePath(), COR_ERRO);
             }
         }
 
-        private void escrever(String linha) {
-            areaLog.append(linha + System.lineSeparator());
-            areaLog.setCaretPosition(areaLog.getDocument().getLength());
+        private void mostrarSobre() {
+            String texto = "<html><div style='width:340px'>"
+                    + "<b>Gerador de Arquivo TXT</b> &nbsp; versao " + VERSAO + "<br><br>"
+                    + "Substitui as macros VBA lDom, ISel e Verifica_Arquivo: le a planilha e"
+                    + " grava o txt no layout 6000/6100.<br><br>"
+                    + "A planilha nunca e alterada - o programa so le.<br><br>"
+                    + "<b>" + AUTOR + "</b><br>" + EMPRESA + "<br><br>"
+                    + "Java " + System.getProperty("java.version", "?")
+                    + " &nbsp;-&nbsp; sem bibliotecas externas"
+                    + "</div></html>";
+            JOptionPane.showMessageDialog(this, new JLabel(texto), "Sobre",
+                    JOptionPane.INFORMATION_MESSAGE);
+        }
+
+        // -------- registro na tela
+
+        private void estado(String texto, Color cor) {
+            rotuloEstado.setText(texto);
+            rotuloEstado.setForeground(cor);
+        }
+
+        /** Escreve uma linha no registro. Cor nula = cor normal do texto. */
+        private void escrever(String linha, Color cor) {
+            javax.swing.text.SimpleAttributeSet estilo = new javax.swing.text.SimpleAttributeSet();
+            if (cor != null) {
+                javax.swing.text.StyleConstants.setForeground(estilo, cor);
+                javax.swing.text.StyleConstants.setBold(estilo, true);
+            }
+            javax.swing.text.Document documento = registro.getDocument();
+            try {
+                documento.insertString(documento.getLength(), linha + "\n", estilo);
+            } catch (javax.swing.text.BadLocationException e) {
+                LOG.log(Level.FINE, "falha ao escrever no registro da tela", e);
+            }
+            registro.setCaretPosition(documento.getLength());
+        }
+
+        // -------- quebra de palavra comprida no registro
+        //
+        // O JTextPane so quebra a linha entre palavras, e um caminho de arquivo
+        // nao tem espaco nenhum: o caminho passava da borda e sumia. Trocar o
+        // EditorKit e o jeito padrao de resolver - a LabelView passa a aceitar
+        // largura minima zero, o que autoriza quebrar no meio da palavra.
+
+        private static final class KitQueQuebra extends javax.swing.text.StyledEditorKit {
+            private static final long serialVersionUID = 1L;
+
+            private final transient javax.swing.text.ViewFactory fabrica = new FabricaQueQuebra();
+
+            @Override
+            public javax.swing.text.ViewFactory getViewFactory() {
+                return fabrica;
+            }
+        }
+
+        private static final class FabricaQueQuebra implements javax.swing.text.ViewFactory {
+            public javax.swing.text.View create(javax.swing.text.Element elemento) {
+                String tipo = elemento.getName();
+                if (tipo != null) {
+                    if (javax.swing.text.AbstractDocument.ContentElementName.equals(tipo)) {
+                        return new RotuloQueQuebra(elemento);
+                    }
+                    if (javax.swing.text.AbstractDocument.ParagraphElementName.equals(tipo)) {
+                        return new javax.swing.text.ParagraphView(elemento);
+                    }
+                    if (javax.swing.text.AbstractDocument.SectionElementName.equals(tipo)) {
+                        return new javax.swing.text.BoxView(elemento,
+                                javax.swing.text.View.Y_AXIS);
+                    }
+                    if (javax.swing.text.StyleConstants.ComponentElementName.equals(tipo)) {
+                        return new javax.swing.text.ComponentView(elemento);
+                    }
+                    if (javax.swing.text.StyleConstants.IconElementName.equals(tipo)) {
+                        return new javax.swing.text.IconView(elemento);
+                    }
+                }
+                return new javax.swing.text.LabelView(elemento);
+            }
+        }
+
+        private static final class RotuloQueQuebra extends javax.swing.text.LabelView {
+            RotuloQueQuebra(javax.swing.text.Element elemento) {
+                super(elemento);
+            }
+
+            @Override
+            public float getMinimumSpan(int eixo) {
+                // zero na horizontal = pode quebrar onde precisar
+                return eixo == javax.swing.text.View.X_AXIS ? 0f : super.getMinimumSpan(eixo);
+            }
         }
     }
 
