@@ -1,0 +1,7 @@
+* text=auto eol=lf
+*.bat text eol=crlf
+*.properties text eol=crlf
+exemplo/gabarito.txt -text
+*.xlsx binary
+*.xlsm binary
+*.jar binary
