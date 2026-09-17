@@ -14,6 +14,8 @@ dono programa melhor em Java. Em 17/09/2026 o Apache POI e o Maven foram
 removidos — o leitor de .xlsx passou a ser escrito à mão com zip + StAX do JDK.
 Em 17/09/2026 o projeto entrou no git (repositório `liiraa7/DOM-IMPORTA`) e o
 nome da aba passou a ser procurado sem diferenciar maiúsculas de minúsculas.
+Os pull requests #1 e #2 juntaram tudo na `main` e a branch de trabalho foi
+apagada: **o trabalho acontece direto na `main`**, sem branch nem PR no meio.
 
 ## O que a macro fazia (fonte original guardado no chat)
 - `lDom` — varria a aba "Base" da linha 2 até a primeira linha com a coluna A
@@ -87,6 +89,12 @@ javac --release 8 -encoding UTF-8 -nowarn -d out src\br\com\triangulo\gerador\Ge
 java -cp out br.com.triangulo.gerador.GeradorArquivo --console
 jar --create --file gerador-arquivo-txt.jar --main-class br.com.triangulo.gerador.GeradorArquivo -C out .
 ```
+
+No VS Code as três linhas acima estão prontas como tarefas: `Ctrl+Shift+B`
+roda o rito inteiro, e `Executar Tarefa` lista as outras (ver `.vscode/tasks.json`).
+O editor **não** garante o alvo Java 8 — o Language Server usa o JDK instalado e
+aceitaria `var` ou `record` sem reclamar. Quem recusa é o `--release 8` do
+`compilar.bat`, ou seja, a tarefa 1: ela é obrigatória antes de entregar.
 
 O `--console` roda sem janela e usa a planilha e o destino do
 `config.properties` — é assim que se testa uma alteração sem clicar em nada.
