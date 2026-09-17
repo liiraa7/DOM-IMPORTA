@@ -20,9 +20,14 @@ arquivo, nunca escreve nele.
 | Testar com outro config | `java -jar gerador-arquivo-txt.jar --console --config exemplo\config-exemplo.properties` |
 | Recompilar depois de mexer no fonte | `compilar.bat` (precisa do JDK) |
 | Conferir a saída contra o gabarito | `exemplo\conferir.bat` |
+| Descobrir por que não abriu | `diagnostico.bat` |
 
 O `config.properties` e o `gerador_arquivo.log` ficam na mesma pasta do jar — é
 o caminho que aparece no rodapé da janela.
+
+Se o `rodar.bat` não abrir nada, rode o `diagnostico.bat`: ele diz em que pasta
+está, se achou o Java, se o jar e a planilha existem e ainda gera o txt de
+teste. A saída dele é o que se manda para quem for ajudar.
 
 ## O que sai
 
