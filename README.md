@@ -79,3 +79,4 @@ CLAUDE.md                                          briefing e regras do projeto
 
 Antes de mexer no código, leia o `CLAUDE.md`: ele tem as regras da casa (Java 8,
 classe única, zero dependência) e as armadilhas que já custaram caro.
+Teste do caminho do git — 17/09/2026.
