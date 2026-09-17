@@ -16,7 +16,7 @@ arquivo, nunca escreve nele.
 | Quero | Faço |
 | --- | --- |
 | Abrir a janela | `rodar.bat` (ou `java -jar gerador-arquivo-txt.jar`) |
-| Gerar sem janela (agendador) | `gerar-agora.bat` (ou `java -jar gerador-arquivo-txt.jar --console`) |
+| Gerar sem janela (agendador) | `gerar-agora.bat` — no Agendador de Tarefas, com o argumento `--agendador` e `saida.sobrescrever=sempre` |
 | Testar com outro config | `java -jar gerador-arquivo-txt.jar --console --config exemplo\config-exemplo.properties` |
 | Recompilar depois de mexer no fonte | `compilar.bat` (precisa do JDK) |
 | Conferir a saída contra o gabarito | `exemplo\conferir.bat` |
