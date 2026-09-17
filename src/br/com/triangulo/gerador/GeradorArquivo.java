@@ -79,7 +79,7 @@ import javax.xml.stream.XMLStreamReader;
  */
 public final class GeradorArquivo {
 
-    static final String VERSAO = "3.4.0";
+    static final String VERSAO = "3.5.0";
     static final String AUTOR = "Ronald Lira";
     static final String EMPRESA = "Triangulo Contabilidade";
     static final String NOME_CONFIG = "config.properties";
@@ -135,7 +135,8 @@ public final class GeradorArquivo {
             System.out.println("Gerador de Arquivo TXT v" + VERSAO + " - " + AUTOR + " (console)");
             System.out.println("config   = " + cfg.arquivo.getAbsolutePath());
             System.out.println("planilha = " + cfg.planilhaCaminho);
-            Resultado r = gerar(cfg, cfg.saidaDestino, new Confirmacao() {
+            // caminho vazio = deixa o programa montar o nome dos campos do config
+            Resultado r = gerar(cfg, "", new Confirmacao() {
                 public boolean sobrescrever(File arquivo) {
                     java.io.Console console = System.console();
                     if (console == null) {
@@ -213,6 +214,12 @@ public final class GeradorArquivo {
         String celulaPasta;
         String celulaNome;
         List<String> celulasObrigatorias;
+        boolean usarAbaPrincipal;
+        String empresa;
+        String tipo;
+        String competencia;
+        String pasta;
+        String nomePadrao;
         String colunaInicial;
         String colunaFinal;
         int linhaInicial;
@@ -245,6 +252,12 @@ public final class GeradorArquivo {
             cfg.celulaPasta = texto(p, "controle.celulaPasta", "B9");
             cfg.celulaNome = texto(p, "controle.celulaNome", "B10");
             cfg.celulasObrigatorias = lista(texto(p, "controle.obrigatorias", "B6,B7"));
+            cfg.usarAbaPrincipal = logico(p, "controle.usarAbaPrincipal", false);
+            cfg.empresa = texto(p, "saida.empresa", "");
+            cfg.tipo = texto(p, "saida.tipo", "");
+            cfg.competencia = texto(p, "saida.competencia", "");
+            cfg.pasta = texto(p, "saida.pasta", "");
+            cfg.nomePadrao = texto(p, "saida.nomePadrao", "{empresa}_{tipo}_{competencia}");
             cfg.colunaInicial = texto(p, "base.colunaInicial", "A").toUpperCase();
             cfg.colunaFinal = texto(p, "base.colunaFinal", "I").toUpperCase();
             cfg.linhaInicial = inteiro(p, "base.linhaInicial", 2);
@@ -260,8 +273,38 @@ public final class GeradorArquivo {
             cfg.sobrescrever = texto(p, "saida.sobrescrever", "recusar").toLowerCase();
             cfg.saidaDestino = texto(p, "saida.destino", "");
             cfg.linhaEmBrancoNoInicio = logico(p, "saida.linhaEmBrancoNoInicio", true);
+            cfg.migrarDestinoAntigo();
             cfg.validar();
             return cfg;
+        }
+
+        /**
+         * Config da versao antiga guardava o caminho inteiro em saida.destino.
+         * Aproveita o que da: a pasta, e - se o nome tiver a cara de
+         * EMPRESA_TIPO_COMPETENCIA - os tres campos tambem.
+         */
+        private void migrarDestinoAntigo() {
+            if (vazio(saidaDestino)) {
+                return;
+            }
+            File antigo = new File(saidaDestino);
+            if (vazio(pasta) && antigo.getParent() != null) {
+                pasta = antigo.getParent();
+            }
+            if (!vazio(empresa) || !vazio(tipo) || !vazio(competencia)) {
+                return;
+            }
+            String nome = antigo.getName();
+            int ponto = nome.lastIndexOf('.');
+            if (ponto > 0) {
+                nome = nome.substring(0, ponto);
+            }
+            String[] partes = nome.split("_");
+            if (partes.length == 3) {
+                empresa = partes[0];
+                tipo = partes[1];
+                competencia = partes[2];
+            }
         }
 
         private void validar() {
@@ -294,40 +337,77 @@ public final class GeradorArquivo {
         }
 
         /**
-         * Regrava a linha saida.destino preservando comentarios e o resto do
-         * arquivo. Caminho sempre com barra normal: no .properties a barra
-         * invertida e escape e engoliria o caractere seguinte.
+         * Regrava no config.properties o que a pessoa digitou na janela,
+         * preservando comentarios e o resto do arquivo - na proxima abertura os
+         * campos ja vem preenchidos.
+         *
+         * Caminho sempre com barra normal: no .properties a barra invertida e
+         * escape e engoliria o caractere seguinte.
          */
-        void gravarDestino(String caminho) {
+        void gravarCampos(String ultimoArquivo) {
+            Map<String, String> valores = new LinkedHashMap<String, String>();
+            valores.put("saida.empresa", empresa);
+            valores.put("saida.tipo", tipo);
+            valores.put("saida.competencia", competencia);
+            valores.put("saida.pasta", pasta == null ? "" : pasta.replace('\\', '/'));
+            valores.put("saida.ultimoArquivo",
+                    ultimoArquivo == null ? "" : ultimoArquivo.replace('\\', '/'));
+            gravar(valores);
+        }
+
+        private void gravar(Map<String, String> valores) {
             if (!arquivo.isFile()) {
                 return;
             }
             try {
-                String valor = caminho == null ? "" : caminho.replace('\\', '/');
                 String texto = lerTexto(arquivo);
                 String fim = texto.indexOf("\r\n") >= 0 ? "\r\n" : "\n";
                 String[] linhas = texto.split("\\r?\\n", -1);
-                boolean achou = false;
+                Set<String> achadas = new HashSet<String>();
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < linhas.length; i++) {
                     String linha = linhas[i];
-                    if (linha.trim().startsWith("saida.destino=")) {
-                        linha = "saida.destino=" + valor;
-                        achou = true;
+                    for (Map.Entry<String, String> e : valores.entrySet()) {
+                        if (linha.trim().startsWith(e.getKey() + "=")) {
+                            linha = e.getKey() + "=" + e.getValue();
+                            achadas.add(e.getKey());
+                        }
                     }
                     if (i > 0) {
                         sb.append(fim);
                     }
                     sb.append(linha);
                 }
-                if (!achou) {
-                    sb.append(fim).append("saida.destino=").append(valor);
+                for (Map.Entry<String, String> e : valores.entrySet()) {
+                    if (!achadas.contains(e.getKey())) {
+                        sb.append(fim).append(e.getKey()).append("=").append(e.getValue());
+                    }
                 }
                 Files.write(arquivo.toPath(), sb.toString().getBytes("ISO-8859-1"));
-                saidaDestino = caminho == null ? "" : caminho;
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "nao consegui regravar saida.destino no config.properties", e);
+                LOG.log(Level.WARNING, "nao consegui regravar o config.properties", e);
             }
+        }
+
+        /**
+         * Monta o nome do arquivo com o molde saida.nomePadrao. Campo vazio nao
+         * deixa separador solto: "744__082025" viraria "744_082025".
+         */
+        String nomeMontado() {
+            String nome = nomePadrao;
+            nome = nome.replace("{empresa}", empresa == null ? "" : empresa.trim());
+            nome = nome.replace("{tipo}", tipo == null ? "" : tipo.trim());
+            nome = nome.replace("{competencia}", competencia == null ? "" : competencia.trim());
+            while (nome.indexOf("__") >= 0) {
+                nome = nome.replace("__", "_");
+            }
+            while (nome.startsWith("_")) {
+                nome = nome.substring(1);
+            }
+            while (nome.endsWith("_")) {
+                nome = nome.substring(0, nome.length() - 1);
+            }
+            return nome.trim();
         }
 
         private static String texto(Properties p, String chave, String padrao) {
@@ -954,9 +1034,15 @@ public final class GeradorArquivo {
         List<String[]> registros;
         File destino;
         try {
-            Aba principal = leitor.lerAba(cfg.abaPrincipal);
-            conferirObrigatorias(cfg, principal);
-            destino = destinoFinal(cfg, principal, destinoEscolhido);
+            // A aba Principal so existe para quem ficou no jeito antigo: hoje o
+            // nome e o destino sao do programa, e a planilha pode ter so a Base.
+            if (cfg.usarAbaPrincipal) {
+                Aba principal = leitor.lerAba(cfg.abaPrincipal);
+                conferirObrigatorias(cfg, principal);
+                destino = destinoDaAbaPrincipal(cfg, principal, destinoEscolhido);
+            } else {
+                destino = destinoDosCampos(cfg, destinoEscolhido);
+            }
             registros = lerRegistros(cfg, leitor.lerAba(cfg.abaBase), avisos);
         } finally {
             leitor.fechar();
@@ -974,7 +1060,7 @@ public final class GeradorArquivo {
             throw new IOException("Nao consegui criar a pasta " + pasta.getAbsolutePath());
         }
         Files.write(destino.toPath(), conteudo);
-        cfg.gravarDestino(destino.getAbsolutePath());
+        cfg.gravarCampos(destino.getAbsolutePath());
 
         LOG.info("planilha=" + cfg.planilhaCaminho + " registros=" + registros.size()
                 + " arquivo=" + destino.getAbsolutePath() + " bytes=" + conteudo.length
@@ -996,7 +1082,37 @@ public final class GeradorArquivo {
         }
     }
 
-    private static File destinoFinal(Config cfg, Aba principal, String escolhido) {
+    /** Jeito de hoje: pasta e campos vem do programa, nao da planilha. */
+    private static File destinoDosCampos(Config cfg, String escolhido) {
+        String caminho = escolhido == null ? "" : escolhido.trim();
+        if (!vazio(caminho)) {
+            return comExtensao(new File(caminho), cfg.extensao);
+        }
+        List<String> faltando = new ArrayList<String>();
+        if (vazio(cfg.empresa)) {
+            faltando.add("Empresa");
+        }
+        if (vazio(cfg.tipo)) {
+            faltando.add("Tipo");
+        }
+        if (!faltando.isEmpty()) {
+            throw new IllegalStateException("Preencha " + juntar(faltando, " e ")
+                    + " - e disso que sai o nome do arquivo.");
+        }
+        String nome = cfg.nomeMontado();
+        if (vazio(nome)) {
+            throw new IllegalStateException("O nome do arquivo ficou vazio."
+                    + " Confira o molde saida.nomePadrao no " + NOME_CONFIG + ".");
+        }
+        if (vazio(cfg.pasta)) {
+            throw new IllegalStateException("Escolha a pasta onde salvar o arquivo " + nome
+                    + cfg.extensao + ".");
+        }
+        return comExtensao(new File(cfg.pasta, nome), cfg.extensao);
+    }
+
+    /** Jeito antigo, so com controle.usarAbaPrincipal=true. */
+    private static File destinoDaAbaPrincipal(Config cfg, Aba principal, String escolhido) {
         String caminho = escolhido == null ? "" : escolhido.trim();
         if (!vazio(caminho)) {
             return comExtensao(new File(caminho), cfg.extensao);
@@ -1168,7 +1284,11 @@ public final class GeradorArquivo {
 
         private final File arquivoConfig;
         private final JTextField campoPlanilha = new JTextField(28);
-        private final JTextField campoDestino = new JTextField(28);
+        private final JTextField campoEmpresa = new JTextField(8);
+        private final JTextField campoTipo = new JTextField(16);
+        private final JTextField campoCompetencia = new JTextField(8);
+        private final JTextField campoPasta = new JTextField(24);
+        private final JLabel rotuloArquivo = new JLabel(" ");
         private final JLabel rotuloAbas = new JLabel(" ");
         private final JTextPane registro = new JTextPane();
         private final JProgressBar barra = new JProgressBar();
@@ -1179,6 +1299,12 @@ public final class GeradorArquivo {
         private final JButton botaoRecarregar = new JButton("Recarregar config");
         private transient Config cfg;
         private File ultimoArquivo;
+        /**
+         * Enquanto a tela esta sendo preenchida, o DocumentListener nao pode
+         * copiar os campos de volta para o cfg: os que ainda nao foram
+         * preenchidos estao vazios e apagariam o valor lido do config.
+         */
+        private boolean preenchendo;
 
         Janela(File arquivoConfig) {
             super("Gerador de Arquivo TXT v" + VERSAO + " - by " + AUTOR);
@@ -1198,7 +1324,8 @@ public final class GeradorArquivo {
             setMinimumSize(new Dimension(720, 540));
             // nem menor que caber, nem maior que a tela do usuario
             Dimension tela = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
-            int largura = Math.min(Math.max(getWidth(), 840), Math.max(840, tela.width - 80));
+            int largura = Math.min(Math.max(getWidth(), 860), Math.min(1020, Math.max(860,
+                    tela.width - 80)));
             int altura = Math.min(Math.max(getHeight(), 620), Math.max(620, tela.height - 80));
             setSize(new Dimension(largura, altura));
             setLocationRelativeTo(null);
@@ -1314,58 +1441,98 @@ public final class GeradorArquivo {
             JPanel painel = new JPanel(new GridBagLayout());
             painel.setBackground(Color.WHITE);
             painel.setBorder(BorderFactory.createCompoundBorder(
-                    quadro("Planilha e destino"),
+                    quadro("Planilha e arquivo a gerar"),
                     BorderFactory.createEmptyBorder(2, 6, 6, 8)));
             GridBagConstraints g = new GridBagConstraints();
             g.anchor = GridBagConstraints.WEST;
             g.insets = new Insets(3, 6, 3, 6);
 
             JButton escolherPlanilha = new JButton("Selecionar...");
-            JButton escolherDestino = new JButton("Selecionar...");
+            JButton escolherPasta = new JButton("Selecionar...");
 
+            // --- linha 1: a planilha
             g.gridy = 0;
             g.gridx = 0;
             painel.add(negrito(new JLabel("Planilha:")), g);
             g.gridx = 1;
+            g.gridwidth = 4;
             g.fill = GridBagConstraints.HORIZONTAL;
             g.weightx = 1;
             campoPlanilha.setToolTipText("Caminho do .xlsx ou .xlsm. O programa so le este arquivo.");
             painel.add(campoPlanilha, g);
+            g.gridwidth = 1;
             g.fill = GridBagConstraints.NONE;
             g.weightx = 0;
-            g.gridx = 2;
+            g.gridx = 5;
             painel.add(escolherPlanilha, g);
 
+            // --- linha 2: as abas que existem de verdade
             g.gridy = 1;
             g.gridx = 0;
             JLabel rotulo = new JLabel("Abas:");
             rotulo.setForeground(CINZA_TEXTO);
             painel.add(rotulo, g);
             g.gridx = 1;
-            g.gridwidth = 2;
+            g.gridwidth = 5;
             rotuloAbas.setForeground(AZUL);
             painel.add(negrito(rotuloAbas), g);
-
             g.gridwidth = 1;
+
+            // --- linha 3: os tres campos que montam o nome
             g.gridy = 2;
             g.gridx = 0;
-            g.insets = new Insets(10, 6, 3, 6);
-            painel.add(negrito(new JLabel("Salvar txt em:")), g);
+            g.insets = new Insets(12, 6, 3, 6);
+            painel.add(negrito(new JLabel("Empresa*:")), g);
             g.gridx = 1;
+            campoEmpresa.setToolTipText("Codigo da empresa - o 744 do nome do arquivo.");
+            painel.add(campoEmpresa, g);
+            g.gridx = 2;
+            painel.add(negrito(new JLabel("Tipo*:")), g);
+            g.gridx = 3;
+            campoTipo.setToolTipText("PARCELAMENTOS, por exemplo.");
+            painel.add(campoTipo, g);
+            g.gridx = 4;
+            JLabel rotuloComp = new JLabel("Competencia:");
+            painel.add(negrito(rotuloComp), g);
+            g.gridx = 5;
+            campoCompetencia.setToolTipText("082025, por exemplo.");
+            painel.add(campoCompetencia, g);
+
+            // --- linha 4: a pasta
+            g.insets = new Insets(3, 6, 3, 6);
+            g.gridy = 3;
+            g.gridx = 0;
+            painel.add(negrito(new JLabel("Pasta:")), g);
+            g.gridx = 1;
+            g.gridwidth = 4;
             g.fill = GridBagConstraints.HORIZONTAL;
             g.weightx = 1;
-            campoDestino.setToolTipText("Deixe em branco para usar a pasta e o nome da aba Principal.");
-            painel.add(campoDestino, g);
+            campoPasta.setToolTipText("Pasta onde o txt vai ser gravado.");
+            painel.add(campoPasta, g);
+            g.gridwidth = 1;
             g.fill = GridBagConstraints.NONE;
             g.weightx = 0;
-            g.gridx = 2;
-            painel.add(escolherDestino, g);
+            g.gridx = 5;
+            painel.add(escolherPasta, g);
 
-            g.gridy = 3;
-            g.gridx = 1;
-            g.gridwidth = 2;
+            // --- linha 5: a previa do que vai ser gravado
+            g.gridy = 4;
+            g.gridx = 0;
+            g.gridwidth = 6;
+            g.fill = GridBagConstraints.HORIZONTAL;
+            g.insets = new Insets(8, 6, 2, 6);
+            rotuloArquivo.setForeground(AZUL);
+            // caminho comprido nao pode esticar a janela: o texto e encurtado no
+            // meio e o caminho inteiro fica na dica do mouse
+            rotuloArquivo.setMinimumSize(new Dimension(1, rotuloArquivo.getPreferredSize().height));
+            rotuloArquivo.setPreferredSize(new Dimension(1, rotuloArquivo.getPreferredSize().height));
+            painel.add(negrito(rotuloArquivo), g);
+            g.fill = GridBagConstraints.NONE;
+
+            g.gridy = 5;
             g.insets = new Insets(0, 6, 4, 6);
-            JLabel dica = new JLabel("em branco = usa a pasta (B9) e o nome (B10) da aba Principal");
+            JLabel dica = new JLabel("* obrigatorios. O nome sai de Empresa, Tipo e Competencia -"
+                    + " o molde e saida.nomePadrao no config.");
             dica.setForeground(CINZA_TEXTO);
             painel.add(dica, g);
 
@@ -1374,12 +1541,72 @@ public final class GeradorArquivo {
                     escolherPlanilha();
                 }
             });
-            escolherDestino.addActionListener(new java.awt.event.ActionListener() {
+            escolherPasta.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
-                    escolherDestino();
+                    escolherPasta();
                 }
             });
+            javax.swing.event.DocumentListener aoDigitar = new javax.swing.event.DocumentListener() {
+                public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                    atualizarPrevia();
+                }
+
+                public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                    atualizarPrevia();
+                }
+
+                public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                    atualizarPrevia();
+                }
+            };
+            campoEmpresa.getDocument().addDocumentListener(aoDigitar);
+            campoTipo.getDocument().addDocumentListener(aoDigitar);
+            campoCompetencia.getDocument().addDocumentListener(aoDigitar);
+            campoPasta.getDocument().addDocumentListener(aoDigitar);
             return painel;
+        }
+
+        /** Mostra, em tempo real, o arquivo exato que o Gerar vai escrever. */
+        private void atualizarPrevia() {
+            if (cfg == null || preenchendo) {
+                rotuloArquivo.setText(" ");
+                return;
+            }
+            copiarCampos();
+            if (vazio(cfg.empresa) || vazio(cfg.tipo)) {
+                rotuloArquivo.setForeground(LARANJA);
+                rotuloArquivo.setText("Preencha Empresa e Tipo - e deles que sai o nome do arquivo.");
+                return;
+            }
+            String nome = cfg.nomeMontado() + cfg.extensao;
+            if (vazio(cfg.pasta)) {
+                rotuloArquivo.setForeground(LARANJA);
+                rotuloArquivo.setText("Escolha a pasta. O arquivo vai se chamar " + nome);
+                return;
+            }
+            rotuloArquivo.setForeground(AZUL);
+            String caminho = new File(cfg.pasta, nome).getPath();
+            rotuloArquivo.setText("Vai gravar: " + encurtar(caminho, 80));
+            rotuloArquivo.setToolTipText(caminho);
+        }
+
+        /** Corta o meio do caminho, que o fim - o nome do arquivo - e o que importa. */
+        private static String encurtar(String caminho, int maximo) {
+            if (caminho.length() <= maximo) {
+                return caminho;
+            }
+            int inicio = Math.max(3, maximo / 4);
+            int fim = maximo - inicio - 3;
+            return caminho.substring(0, inicio) + "..."
+                    + caminho.substring(caminho.length() - fim);
+        }
+
+        private void copiarCampos() {
+            cfg.planilhaCaminho = campoPlanilha.getText().trim();
+            cfg.empresa = campoEmpresa.getText().trim();
+            cfg.tipo = campoTipo.getText().trim();
+            cfg.competencia = campoCompetencia.getText().trim();
+            cfg.pasta = campoPasta.getText().trim();
         }
 
         private JComponent montarRegistro() {
@@ -1509,8 +1736,17 @@ public final class GeradorArquivo {
         private void carregarConfig() {
             try {
                 cfg = Config.carregar(arquivoConfig);
-                campoPlanilha.setText(cfg.planilhaCaminho);
-                campoDestino.setText(cfg.saidaDestino);
+                preenchendo = true;
+                try {
+                    campoPlanilha.setText(cfg.planilhaCaminho);
+                    campoEmpresa.setText(cfg.empresa);
+                    campoTipo.setText(cfg.tipo);
+                    campoCompetencia.setText(cfg.competencia);
+                    campoPasta.setText(cfg.pasta);
+                } finally {
+                    preenchendo = false;
+                }
+                atualizarPrevia();
                 escrever("config lido de " + cfg.arquivo.getAbsolutePath(), null);
                 mostrarAbas();
                 botaoGerar.setEnabled(true);
@@ -1561,15 +1797,16 @@ public final class GeradorArquivo {
             }
         }
 
-        private void escolherDestino() {
+        private void escolherPasta() {
             JFileChooser seletor = new JFileChooser();
-            seletor.setDialogTitle("Onde salvar o txt");
-            String atual = campoDestino.getText().trim();
+            seletor.setDialogTitle("Pasta onde salvar o txt");
+            seletor.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            String atual = campoPasta.getText().trim();
             if (!vazio(atual)) {
-                seletor.setSelectedFile(new File(atual));
+                seletor.setCurrentDirectory(new File(atual));
             }
-            if (seletor.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-                campoDestino.setText(seletor.getSelectedFile().getAbsolutePath());
+            if (seletor.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                campoPasta.setText(seletor.getSelectedFile().getAbsolutePath());
             }
         }
 
@@ -1580,8 +1817,8 @@ public final class GeradorArquivo {
                     return;
                 }
             }
-            cfg.planilhaCaminho = campoPlanilha.getText().trim();
-            final String destino = campoDestino.getText().trim();
+            copiarCampos();
+            final String destino = "";
             botaoGerar.setEnabled(false);
             barra.setVisible(true);
             estado("gerando...", AZUL, AZUL_CLARO);
@@ -1605,7 +1842,7 @@ public final class GeradorArquivo {
                         }
                         escrever("pronto: " + r.registros + " registros, " + r.bytes + " bytes", VERDE);
                         escrever("arquivo: " + r.arquivo.getAbsolutePath(), null);
-                        campoDestino.setText(r.arquivo.getAbsolutePath());
+                        campoPasta.setText(r.arquivo.getAbsoluteFile().getParent());
                         ultimoArquivo = r.arquivo;
                         botaoPasta.setEnabled(true);
                         botaoTxt.setEnabled(true);
@@ -1719,29 +1956,48 @@ public final class GeradorArquivo {
                 + "<p style='background:#E8F4EC; padding:6px'><b>O programa nunca escreve na "
                 + "planilha.</b> "
                 + "Ele s&oacute; l&ecirc;. Pode rodar com a planilha aberta que nada nela muda.</p> "
-                + "<h3 style='color:#1D5B9A'>2. O que ele espera na aba Principal</h3> "
-                + "<table cellpadding='4' cellspacing='0'> "
-                + "<tr><td><b>B6</b></td><td>obrigat&oacute;ria &mdash; se estiver vazia, o programa "
-                + "recusa gerar</td></tr> "
-                + "<tr><td><b>B7</b></td><td>obrigat&oacute;ria &mdash; mesma coisa</td></tr> "
-                + "<tr><td><b>B9</b></td><td>pasta onde salvar o txt</td></tr> "
-                + "<tr><td><b>B10</b></td><td>nome do arquivo, <b>sem</b> o <code>.txt</code></td></tr> "
-                + "</table> "
-                + "<p>B9 e B10 s&oacute; s&atilde;o usadas quando o campo <b>Salvar txt em</b> "
-                + "est&aacute; em branco. Se voc&ecirc; "
-                + "escolher o destino na tela, ele manda.</p> "
-                + "<h3 style='color:#1D5B9A'>3. O que ele espera na aba Base</h3> "
+                + "<h3 style='color:#1D5B9A'>2. A planilha s&oacute; precisa da aba Base</h3> "
+                + "<p>Nada de aba <b>Principal</b>, nada de c&eacute;lula de controle. Aquela aba "
+                + "s&oacute; servia para "
+                + "montar o nome do arquivo e dizer onde salvar &mdash; e isso agora &eacute; trabalho "
+                + "<b>deste "
+                + "programa</b>, nos campos da aba <b>Gerar arquivo</b>.</p> "
+                + "<p>&Eacute; melhor assim por um motivo simples: aba que existe na planilha &eacute; "
+                + "aba onde algu&eacute;m "
+                + "vai acabar digitando por engano.</p> "
+                + "<p>Quem ainda tiver a planilha antiga e quiser o jeito de antes p&otilde;e "
+                + "<code>controle.usarAbaPrincipal=true</code> no config, e a&iacute; voltam a valer B6 "
+                + "e B7 "
+                + "obrigat&oacute;rias, B9 para a pasta e B10 para o nome.</p> "
+                + "<h3 style='color:#1D5B9A'>3. De onde sai o nome do arquivo</h3> "
+                + "<p>Dos tr&ecirc;s campos da tela, nesta ordem:</p> "
+                + "<pre style='background:#F2F5F9; padding:6px; font-size:11px'>Empresa  Tipo            "
+                + "Compet&ecirc;ncia "
+                + "744    _ PARCELAMENTOS _ 082025      &nbsp;=&nbsp; 744_PARCELAMENTOS_082025.txt</pre> "
+                + "<p><b>Empresa</b> e <b>Tipo</b> s&atilde;o obrigat&oacute;rios &mdash; &eacute; o "
+                + "mesmo asterisco que a planilha "
+                + "antiga tinha. Compet&ecirc;ncia pode ficar em branco, e a&iacute; o nome sai sem ela, "
+                + "sem "
+                + "deixar separador solto.</p> "
+                + "<p>A <b>Pasta</b> &eacute; escolhida no bot&atilde;o <b>Selecionar...</b>. A linha "
+                + "azul logo abaixo dos "
+                + "campos mostra, em tempo real, <b>o arquivo exato</b> que o Gerar vai escrever &mdash; "
+                + "leia "
+                + "essa linha antes de clicar.</p> "
+                + "<p>A ordem do nome mora no config, em <code>saida.nomePadrao</code>. O molde de "
+                + "f&aacute;brica &eacute; "
+                + "<code>{empresa}_{tipo}_{competencia}</code>; trocar a ordem ou o separador &eacute; "
+                + "editar essa linha, sem recompilar nada.</p> "
+                + "<h3 style='color:#1D5B9A'>4. O que ele espera na aba Base</h3> "
                 + "<p>Uma linha por registro, das colunas <b>A at&eacute; I</b>, come&ccedil;ando na "
                 + "<b>linha 2</b> &mdash; a "
-                + "linha 1 &eacute; o cabe&ccedil;alho e &eacute; ignorada. Cada linha preenchida "
-                + "vir&aacute; a ser um par de "
-                + "linhas no txt.</p> "
+                + "linha 1 &eacute; o cabe&ccedil;alho e &eacute; ignorada.</p> "
                 + "<p>Linha totalmente vazia no meio da Base &eacute; <b>pulada</b>, e a varredura "
                 + "continua at&eacute; o "
                 + "fim. A macro antiga parava na primeira vazia e cortava o arquivo pela metade; "
                 + "quem quiser o jeito antigo p&otilde;e <code>base.pararNaLinhaVazia=true</code> no "
                 + "config.</p> "
-                + "<h3 style='color:#1D5B9A'>4. O que sai no arquivo</h3> "
+                + "<h3 style='color:#1D5B9A'>5. O que sai no arquivo</h3> "
                 + "<p>Para cada linha da Base, duas linhas no txt:</p> "
                 + "<pre style='background:#F2F5F9; padding:6px; font-size:11px'>6000|X|||| "
                 + "6100|001|JO&Atilde;O ATACAD&Atilde;O LTDA|1234,5|31/01/2026|3|acordo|||FIM|</pre> "
@@ -1751,33 +2007,38 @@ public final class GeradorArquivo {
                 + "fazia. Mudar "
                 + "qualquer uma dessas tr&ecirc;s coisas &eacute; mexer no config, n&atilde;o no "
                 + "programa.</p> "
-                + "<h3 style='color:#1D5B9A'>5. Como usar no dia a dia</h3> "
+                + "<h3 style='color:#1D5B9A'>6. Como usar no dia a dia</h3> "
                 + "<ol> "
                 + "<li>Confira o caminho da <b>Planilha</b>. O campo <b>Abas</b> mostra os nomes que "
                 + "existem "
                 + "    de verdade no arquivo &mdash; serve de confer&ecirc;ncia.</li> "
-                + "<li>Deixe <b>Salvar txt em</b> em branco para usar B9 e B10, ou escolha o "
-                + "destino.</li> "
+                + "<li>Preencha <b>Empresa</b>, <b>Tipo</b> e <b>Compet&ecirc;ncia</b>, e escolha a "
+                + "<b>Pasta</b>.</li> "
+                + "<li>Leia a linha azul: &eacute; o arquivo que vai ser gravado.</li> "
                 + "<li>Clique <b>Gerar arquivo</b> (ou aperte Enter).</li> "
                 + "<li>Leia o <b>Registro</b>. Laranja &eacute; aviso, vermelho &eacute; erro, verde "
                 + "&eacute; o resultado.</li> "
                 + "<li><b>Abrir txt</b> abre o arquivo gerado; <b>Abrir pasta</b> abre a pasta "
                 + "dele.</li> "
                 + "</ol> "
-                + "<h3 style='color:#1D5B9A'>6. Onde ficam as configura&ccedil;&otilde;es</h3> "
+                + "<p>Os campos ficam guardados: na pr&oacute;xima abertura v&ecirc;m preenchidos como "
+                + "voc&ecirc; deixou. "
+                + "Em geral s&oacute; a <b>Compet&ecirc;ncia</b> muda de um m&ecirc;s para o outro.</p> "
+                + "<h3 style='color:#1D5B9A'>7. Onde ficam as configura&ccedil;&otilde;es</h3> "
                 + "<p>Na mesma pasta do programa ficam o <b>config.properties</b> &mdash; caminhos, "
                 + "colunas, "
-                + "prefixos, codifica&ccedil;&atilde;o &mdash; e o <b>gerador_arquivo.log</b>, que "
-                + "guarda toda gera&ccedil;&atilde;o e "
-                + "todo erro, com data e hora. O caminho exato est&aacute; no p&eacute; desta "
+                + "prefixos, codifica&ccedil;&atilde;o, molde do nome &mdash; e o "
+                + "<b>gerador_arquivo.log</b>, que guarda "
+                + "toda gera&ccedil;&atilde;o e todo erro, com data e hora. O caminho exato est&aacute; "
+                + "no p&eacute; desta "
                 + "janela.</p> "
                 + "<p>Depois de editar o config, clique <b>Recarregar config</b>: n&atilde;o precisa "
                 + "fechar o "
                 + "programa.</p> "
-                + "<h3 style='color:#1D5B9A'>7. Sem janela, para o agendador</h3> "
-                + "<p>O <code>gerar-agora.bat</code> gera o txt sem abrir nada, usando o config. "
-                + "&Eacute; o que se "
-                + "coloca no Agendador de Tarefas do Windows. Nesse caso deixe "
+                + "<h3 style='color:#1D5B9A'>8. Sem janela, para o agendador</h3> "
+                + "<p>O <code>gerar-agora.bat</code> gera o txt sem abrir nada, usando os campos "
+                + "guardados no "
+                + "config. &Eacute; o que se coloca no Agendador de Tarefas do Windows. Nesse caso deixe "
                 + "<code>saida.sobrescrever=sempre</code>, sen&atilde;o a segunda execu&ccedil;&atilde;o "
                 + "recusa gravar porque o "
                 + "arquivo do dia anterior ainda est&aacute; l&aacute;.</p> "
@@ -1789,9 +2050,9 @@ public final class GeradorArquivo {
                 + "<html><body style='font-family:sans-serif; font-size:12px; margin:4px 10px 10px "
                 + "10px'> "
                 + "<h2 style='color:#102E54; margin-bottom:2px'>Se der erro</h2> "
-                + "<div style='color:#5F6976'>O que na planilha faz o programa parar, e o que s&oacute; "
-                + "muda o "
-                + "resultado sem avisar alto.</div> "
+                + "<div style='color:#5F6976'>O que faz o programa parar, e o que s&oacute; muda o "
+                + "resultado sem "
+                + "avisar alto.</div> "
                 + "<hr> "
                 + "<h3 style='color:#B01C1C'>Faz o programa PARAR sem gerar nada</h3> "
                 + "<table cellpadding='5' cellspacing='0'> "
@@ -1799,24 +2060,21 @@ public final class GeradorArquivo {
                 + "fazer</b></td></tr> "
                 + "<tr><td><b>Planilha n&atilde;o est&aacute; no caminho</b> do config &mdash; "
                 + "algu&eacute;m moveu, renomeou "
-                + "    ou a rede caiu</td><td>clique <b>Selecionar...</b> e aponte o arquivo, ou corrija "
-                + "    <code>planilha.caminho</code></td></tr> "
+                + "    ou a rede caiu</td><td>clique <b>Selecionar...</b> e aponte o arquivo</td></tr> "
                 + "<tr style='background:#FAFBFD'><td><b>Arquivo &eacute; .xls antigo</b> (formato "
                 + "bin&aacute;rio) ou "
                 + "    est&aacute; corrompido</td><td>abra no Excel e salve como <b>.xlsx</b> ou "
                 + "<b>.xlsm</b></td></tr> "
-                + "<tr><td><b>Aba Principal ou Base n&atilde;o existe</b> com esse nome &mdash; "
-                + "renomeada, com "
-                + "    espa&ccedil;o sobrando, ou escrita diferente</td><td>o erro lista as abas "
-                + "encontradas; "
-                + "    ajuste o nome no config. Mai&uacute;scula/min&uacute;scula o programa resolve "
-                + "sozinho e avisa</td></tr> "
-                + "<tr style='background:#FAFBFD'><td><b>B6 ou B7 vazias</b> na aba Principal</td> "
-                + "    <td>preencha as duas; s&atilde;o as c&eacute;lulas de controle que a macro "
-                + "tamb&eacute;m exigia</td></tr> "
-                + "<tr><td><b>Destino em branco na tela E B9/B10 vazias</b> na planilha</td> "
-                + "    <td>preencha B9 e B10, ou escolha o destino no campo <b>Salvar txt "
-                + "em</b></td></tr> "
+                + "<tr><td><b>Aba Base n&atilde;o existe</b> com esse nome &mdash; renomeada, com "
+                + "espa&ccedil;o sobrando, "
+                + "    ou escrita diferente</td><td>o erro lista as abas encontradas; ajuste "
+                + "    <code>planilha.abaBase</code> no config. Mai&uacute;scula/min&uacute;scula o "
+                + "programa resolve "
+                + "    sozinho e avisa</td></tr> "
+                + "<tr style='background:#FAFBFD'><td><b>Empresa ou Tipo em branco</b></td> "
+                + "    <td>preencha os dois: &eacute; deles que sai o nome do arquivo</td></tr> "
+                + "<tr><td><b>Pasta em branco</b></td><td>escolha a pasta no "
+                + "    <b>Selecionar...</b></td></tr> "
                 + "<tr style='background:#FAFBFD'><td><b>Aba Base sem nenhuma linha preenchida</b> a "
                 + "partir "
                 + "    da linha 2</td><td>confira se os dados n&atilde;o foram colados em outra "
@@ -1833,11 +2091,10 @@ public final class GeradorArquivo {
                 + "    <b>Verifica_Arquivo</b> fazia. Para sobrescrever, mude para "
                 + "<code>perguntar</code> "
                 + "    ou <code>sempre</code></td></tr> "
-                + "<tr><td><b>Pasta de destino n&atilde;o existe e n&atilde;o pode ser criada</b> "
-                + "&mdash; unidade de rede "
-                + "    fora do ar, sem permiss&atilde;o</td><td>confira se o I: ou a pasta da rede "
-                + "est&aacute; "
-                + "    acess&iacute;vel</td></tr> "
+                + "<tr><td><b>Pasta n&atilde;o existe e n&atilde;o pode ser criada</b> &mdash; unidade "
+                + "de rede fora do ar, "
+                + "    sem permiss&atilde;o</td><td>confira se o I: ou a pasta da rede est&aacute; "
+                + "acess&iacute;vel</td></tr> "
                 + "</table> "
                 + "<h3 style='color:#B56500'>N&atilde;o para, mas muda o arquivo &mdash; sempre com "
                 + "aviso</h3> "
@@ -1856,8 +2113,8 @@ public final class GeradorArquivo {
                 + "<li><b>Coluna A vazia com dados no resto da linha.</b> A linha &eacute; gravada e o "
                 + "aviso "
                 + "    pede confer&ecirc;ncia &mdash; pode ser dado colado na linha errada.</li> "
-                + "<li><b>Nome da aba com outra caixa</b> (PRINCIPAL x Principal). Funciona, mas o aviso "
-                + "    fica aparecendo at&eacute; o config bater com o nome de verdade.</li> "
+                + "<li><b>Nome da aba com outra caixa</b> (BASE x Base). Funciona, mas o aviso fica "
+                + "    aparecendo at&eacute; o config bater com o nome de verdade.</li> "
                 + "</ul> "
                 + "<h3 style='color:#00743E'>N&atilde;o avisa nada, e &eacute; onde mora o perigo</h3> "
                 + "<p>Estas quatro coisas geram um arquivo <i>perfeito</i> &mdash; com o conte&uacute;do "
@@ -1973,6 +2230,11 @@ public final class GeradorArquivo {
     }
 
     static String mensagem(Throwable e) {
+        // O SwingWorker embrulha o erro; sem desembrulhar, o nome da classe
+        // aparece na tela na frente da mensagem.
+        if (e instanceof java.util.concurrent.ExecutionException && e.getCause() != null) {
+            return mensagem(e.getCause());
+        }
         String texto = e.getMessage();
         if (vazio(texto)) {
             texto = e.getClass().getSimpleName();

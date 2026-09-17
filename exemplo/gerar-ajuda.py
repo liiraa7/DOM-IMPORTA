@@ -24,25 +24,38 @@ assim a empresa pode desativar macros à vontade, que o trabalho continua saindo
 <p style='background:#E8F4EC; padding:6px'><b>O programa nunca escreve na planilha.</b>
 Ele só lê. Pode rodar com a planilha aberta que nada nela muda.</p>
 
-<h3 style='color:{AZUL}'>2. O que ele espera na aba Principal</h3>
-<table cellpadding='4' cellspacing='0'>
-<tr><td><b>B6</b></td><td>obrigatória — se estiver vazia, o programa recusa gerar</td></tr>
-<tr><td><b>B7</b></td><td>obrigatória — mesma coisa</td></tr>
-<tr><td><b>B9</b></td><td>pasta onde salvar o txt</td></tr>
-<tr><td><b>B10</b></td><td>nome do arquivo, <b>sem</b> o <code>.txt</code></td></tr>
-</table>
-<p>B9 e B10 só são usadas quando o campo <b>Salvar txt em</b> está em branco. Se você
-escolher o destino na tela, ele manda.</p>
+<h3 style='color:{AZUL}'>2. A planilha só precisa da aba Base</h3>
+<p>Nada de aba <b>Principal</b>, nada de célula de controle. Aquela aba só servia para
+montar o nome do arquivo e dizer onde salvar — e isso agora é trabalho <b>deste
+programa</b>, nos campos da aba <b>Gerar arquivo</b>.</p>
+<p>É melhor assim por um motivo simples: aba que existe na planilha é aba onde alguém
+vai acabar digitando por engano.</p>
+<p>Quem ainda tiver a planilha antiga e quiser o jeito de antes põe
+<code>controle.usarAbaPrincipal=true</code> no config, e aí voltam a valer B6 e B7
+obrigatórias, B9 para a pasta e B10 para o nome.</p>
 
-<h3 style='color:{AZUL}'>3. O que ele espera na aba Base</h3>
+<h3 style='color:{AZUL}'>3. De onde sai o nome do arquivo</h3>
+<p>Dos três campos da tela, nesta ordem:</p>
+<pre style='background:#F2F5F9; padding:6px; font-size:11px'>Empresa  Tipo            Competência
+744    _ PARCELAMENTOS _ 082025      &nbsp;=&nbsp; 744_PARCELAMENTOS_082025.txt</pre>
+<p><b>Empresa</b> e <b>Tipo</b> são obrigatórios — é o mesmo asterisco que a planilha
+antiga tinha. Competência pode ficar em branco, e aí o nome sai sem ela, sem
+deixar separador solto.</p>
+<p>A <b>Pasta</b> é escolhida no botão <b>Selecionar...</b>. A linha azul logo abaixo dos
+campos mostra, em tempo real, <b>o arquivo exato</b> que o Gerar vai escrever — leia
+essa linha antes de clicar.</p>
+<p>A ordem do nome mora no config, em <code>saida.nomePadrao</code>. O molde de fábrica é
+<code>{{empresa}}_{{tipo}}_{{competencia}}</code>; trocar a ordem ou o separador é
+editar essa linha, sem recompilar nada.</p>
+
+<h3 style='color:{AZUL}'>4. O que ele espera na aba Base</h3>
 <p>Uma linha por registro, das colunas <b>A até I</b>, começando na <b>linha 2</b> — a
-linha 1 é o cabeçalho e é ignorada. Cada linha preenchida virá a ser um par de
-linhas no txt.</p>
+linha 1 é o cabeçalho e é ignorada.</p>
 <p>Linha totalmente vazia no meio da Base é <b>pulada</b>, e a varredura continua até o
 fim. A macro antiga parava na primeira vazia e cortava o arquivo pela metade;
 quem quiser o jeito antigo põe <code>base.pararNaLinhaVazia=true</code> no config.</p>
 
-<h3 style='color:{AZUL}'>4. O que sai no arquivo</h3>
+<h3 style='color:{AZUL}'>5. O que sai no arquivo</h3>
 <p>Para cada linha da Base, duas linhas no txt:</p>
 <pre style='background:#F2F5F9; padding:6px; font-size:11px'>6000|X||||
 6100|001|JO&Atilde;O ATACAD&Atilde;O LTDA|1234,5|31/01/2026|3|acordo|||FIM|</pre>
@@ -50,51 +63,55 @@ quem quiser o jeito antigo põe <code>base.pararNaLinhaVazia=true</code> no conf
 quebra linha com <b>CRLF</b> — exatamente como o <code>Print #</code> do VBA fazia. Mudar
 qualquer uma dessas três coisas é mexer no config, não no programa.</p>
 
-<h3 style='color:{AZUL}'>5. Como usar no dia a dia</h3>
+<h3 style='color:{AZUL}'>6. Como usar no dia a dia</h3>
 <ol>
 <li>Confira o caminho da <b>Planilha</b>. O campo <b>Abas</b> mostra os nomes que existem
     de verdade no arquivo — serve de conferência.</li>
-<li>Deixe <b>Salvar txt em</b> em branco para usar B9 e B10, ou escolha o destino.</li>
+<li>Preencha <b>Empresa</b>, <b>Tipo</b> e <b>Competência</b>, e escolha a <b>Pasta</b>.</li>
+<li>Leia a linha azul: é o arquivo que vai ser gravado.</li>
 <li>Clique <b>Gerar arquivo</b> (ou aperte Enter).</li>
 <li>Leia o <b>Registro</b>. Laranja é aviso, vermelho é erro, verde é o resultado.</li>
 <li><b>Abrir txt</b> abre o arquivo gerado; <b>Abrir pasta</b> abre a pasta dele.</li>
 </ol>
+<p>Os campos ficam guardados: na próxima abertura vêm preenchidos como você deixou.
+Em geral só a <b>Competência</b> muda de um mês para o outro.</p>
 
-<h3 style='color:{AZUL}'>6. Onde ficam as configurações</h3>
+<h3 style='color:{AZUL}'>7. Onde ficam as configurações</h3>
 <p>Na mesma pasta do programa ficam o <b>config.properties</b> — caminhos, colunas,
-prefixos, codificação — e o <b>gerador_arquivo.log</b>, que guarda toda geração e
-todo erro, com data e hora. O caminho exato está no pé desta janela.</p>
+prefixos, codificação, molde do nome — e o <b>gerador_arquivo.log</b>, que guarda
+toda geração e todo erro, com data e hora. O caminho exato está no pé desta
+janela.</p>
 <p>Depois de editar o config, clique <b>Recarregar config</b>: não precisa fechar o
 programa.</p>
 
-<h3 style='color:{AZUL}'>7. Sem janela, para o agendador</h3>
-<p>O <code>gerar-agora.bat</code> gera o txt sem abrir nada, usando o config. É o que se
-coloca no Agendador de Tarefas do Windows. Nesse caso deixe
+<h3 style='color:{AZUL}'>8. Sem janela, para o agendador</h3>
+<p>O <code>gerar-agora.bat</code> gera o txt sem abrir nada, usando os campos guardados no
+config. É o que se coloca no Agendador de Tarefas do Windows. Nesse caso deixe
 <code>saida.sobrescrever=sempre</code>, senão a segunda execução recusa gravar porque o
 arquivo do dia anterior ainda está lá.</p>
 </body></html>"""
 
 SE_DER_ERRO = CABECA + f"""
 <h2 style='color:{ESCURO}; margin-bottom:2px'>Se der erro</h2>
-<div style='color:#5F6976'>O que na planilha faz o programa parar, e o que só muda o
-resultado sem avisar alto.</div>
+<div style='color:#5F6976'>O que faz o programa parar, e o que só muda o resultado sem
+avisar alto.</div>
 <hr>
 
 <h3 style='color:{VERMELHO}'>Faz o programa PARAR sem gerar nada</h3>
 <table cellpadding='5' cellspacing='0'>
 <tr style='background:#F2F5F9'><td><b>O que está errado</b></td><td><b>O que fazer</b></td></tr>
 <tr><td><b>Planilha não está no caminho</b> do config — alguém moveu, renomeou
-    ou a rede caiu</td><td>clique <b>Selecionar...</b> e aponte o arquivo, ou corrija
-    <code>planilha.caminho</code></td></tr>
+    ou a rede caiu</td><td>clique <b>Selecionar...</b> e aponte o arquivo</td></tr>
 <tr style='background:#FAFBFD'><td><b>Arquivo é .xls antigo</b> (formato binário) ou
     está corrompido</td><td>abra no Excel e salve como <b>.xlsx</b> ou <b>.xlsm</b></td></tr>
-<tr><td><b>Aba Principal ou Base não existe</b> com esse nome — renomeada, com
-    espaço sobrando, ou escrita diferente</td><td>o erro lista as abas encontradas;
-    ajuste o nome no config. Maiúscula/minúscula o programa resolve sozinho e avisa</td></tr>
-<tr style='background:#FAFBFD'><td><b>B6 ou B7 vazias</b> na aba Principal</td>
-    <td>preencha as duas; são as células de controle que a macro também exigia</td></tr>
-<tr><td><b>Destino em branco na tela E B9/B10 vazias</b> na planilha</td>
-    <td>preencha B9 e B10, ou escolha o destino no campo <b>Salvar txt em</b></td></tr>
+<tr><td><b>Aba Base não existe</b> com esse nome — renomeada, com espaço sobrando,
+    ou escrita diferente</td><td>o erro lista as abas encontradas; ajuste
+    <code>planilha.abaBase</code> no config. Maiúscula/minúscula o programa resolve
+    sozinho e avisa</td></tr>
+<tr style='background:#FAFBFD'><td><b>Empresa ou Tipo em branco</b></td>
+    <td>preencha os dois: é deles que sai o nome do arquivo</td></tr>
+<tr><td><b>Pasta em branco</b></td><td>escolha a pasta no
+    <b>Selecionar...</b></td></tr>
 <tr style='background:#FAFBFD'><td><b>Aba Base sem nenhuma linha preenchida</b> a partir
     da linha 2</td><td>confira se os dados não foram colados em outra aba</td></tr>
 <tr><td><b>Caractere que não existe em windows-1252</b> — emoji, símbolo grego,
@@ -104,9 +121,8 @@ resultado sem avisar alto.</div>
     <code>recusar</code></td><td>apague o txt antigo — é de propósito, era o que a macro
     <b>Verifica_Arquivo</b> fazia. Para sobrescrever, mude para <code>perguntar</code>
     ou <code>sempre</code></td></tr>
-<tr><td><b>Pasta de destino não existe e não pode ser criada</b> — unidade de rede
-    fora do ar, sem permissão</td><td>confira se o I: ou a pasta da rede está
-    acessível</td></tr>
+<tr><td><b>Pasta não existe e não pode ser criada</b> — unidade de rede fora do ar,
+    sem permissão</td><td>confira se o I: ou a pasta da rede está acessível</td></tr>
 </table>
 
 <h3 style='color:{LARANJA}'>Não para, mas muda o arquivo — sempre com aviso</h3>
@@ -120,8 +136,8 @@ resultado sem avisar alto.</div>
     espaço e o aviso diz em qual célula.</li>
 <li><b>Coluna A vazia com dados no resto da linha.</b> A linha é gravada e o aviso
     pede conferência — pode ser dado colado na linha errada.</li>
-<li><b>Nome da aba com outra caixa</b> (PRINCIPAL x Principal). Funciona, mas o aviso
-    fica aparecendo até o config bater com o nome de verdade.</li>
+<li><b>Nome da aba com outra caixa</b> (BASE x Base). Funciona, mas o aviso fica
+    aparecendo até o config bater com o nome de verdade.</li>
 </ul>
 
 <h3 style='color:{VERDE}'>Não avisa nada, e é onde mora o perigo</h3>

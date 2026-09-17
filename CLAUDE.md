@@ -6,7 +6,7 @@ e `ISel` de uma planilha do escritório. A empresa remove/desativa macros com
 frequência, obrigando a refazer o processo na mão. Agora a planilha fica limpa:
 o programa apenas LÊ o arquivo e escreve o txt no layout 6000/6100.
 
-Versão atual: **3.4.0**. Autor: **Ronald Lira** (Triangulo Contabilidade). Classe única `GeradorArquivo.java`
+Versão atual: **3.5.0**. Autor: **Ronald Lira** (Triangulo Contabilidade). Classe única `GeradorArquivo.java`
 (pacote `br.com.triangulo.gerador`), **sem dependência externa**.
 
 Histórico: começou em Python (1.0.1, Tkinter), virou Java em 15/09/2026 porque o
@@ -22,6 +22,32 @@ autor. A 3.4.0 trouxe a faixa azul com o "by Ronald Lira" e três abas —
 **Gerar arquivo**, **Como funciona** e **Se der erro** — as duas últimas com o
 manual do programa dentro da própria janela (o botão "Sobre" saiu: a aba
 "Como funciona" faz o serviço).
+
+**A 3.5.0 tirou a aba Principal do caminho.** Ela só servia para montar o nome
+do arquivo e dizer onde salvar, e isso virou trabalho do programa: os campos
+**Empresa**, **Tipo** e **Competência** ficam na janela, o nome sai do molde
+`saida.nomePadrao` (`{empresa}_{tipo}_{competencia}`) e a pasta é escolhida na
+tela. A planilha agora precisa **só da aba Base** — decisão do Ronald, com a
+razão certa: aba que existe é aba onde alguém vai digitar por engano. O jeito
+antigo continua disponível em `controle.usarAbaPrincipal=true`, e um
+`saida.destino` de config velho é migrado sozinho (a pasta, e os três campos
+quando o nome tem a cara `EMPRESA_TIPO_COMPETENCIA`).
+
+## A planilha de verdade (print de 17/09/2026)
+A aba Principal da planilha do escritório era assim — e é dela que vieram os
+campos que hoje estão na janela:
+
+| Célula | Campo | Exemplo |
+| --- | --- | --- |
+| B5 | Competência | `082025` |
+| B6 | Empresa* | `744` |
+| B7 | Tipo* | `PARCELAMENTOS` |
+| B9 | Pasta | `I:\999 - IMPORTA\744\` |
+| B10 | Nome do Arquivo | `744_PARCELAMENTOS_082025` |
+
+O asterisco era dos "Campos Obrigatórios" — os mesmos `controle.obrigatorias=B6,B7`
+do config. O nome era `Empresa_Tipo_Competência` e a pasta terminava no número da
+empresa. Hoje isso é montado pelo programa.
 
 ## O que a macro fazia (fonte original guardado no chat)
 - `lDom` — varria a aba "Base" da linha 2 até a primeira linha com a coluna A
@@ -63,7 +89,11 @@ A aba "Padrao" não existe mais no fluxo: as linhas são montadas na memória.
 7. **Textos do .xlsx**: o Excel grava em `sharedStrings.xml` (`t="s"`), o
    openpyxl grava `inlineStr`. O leitor tem de aguentar os dois — os dois estão
    cobertos e testados.
-8. **Nome de aba com outra caixa**: a planilha real tem "PRINCIPAL" e o config
+8. **Erro do SwingWorker aparece embrulhado**: `get()` levanta
+   `ExecutionException` e o nome da classe vazava para a tela
+   (`java.lang.IllegalStateException: Preencha Tipo`). O `mensagem()`
+   desembrulha — não tirar.
+9. **Nome de aba com outra caixa**: a planilha real tem "PRINCIPAL" e o config
    pedia "Principal" — a geração morria com `IllegalStateException`. Hoje o
    programa procura o nome exato, e só depois tenta ignorando maiúsculas,
    minúsculas e espaços, avisando na tela qual aba usou. Não voltar a comparar
@@ -142,6 +172,13 @@ programa continua sem dependência nenhuma).
 
 ## Onde mexer
 - Layout, colunas, codificação, células de controle → `config.properties`.
+- Ordem ou separador do nome do arquivo → `saida.nomePadrao` no config. As peças
+  são `{empresa}`, `{tipo}` e `{competencia}`; peça vazia não deixa separador
+  solto (`744__082025` sai `744_082025`).
+- Campos da janela e a prévia do arquivo → `Janela.montarEntrada()` e
+  `Janela.atualizarPrevia()`. Cuidado com o `DocumentListener`: ele dispara
+  durante o preenchimento da tela, e sem o guarda `preenchendo` o
+  `copiarCampos()` apaga o que veio do config — foi bug de verdade em 17/09.
 - Nome do autor e da empresa na janela → constantes `AUTOR` e `EMPRESA`.
 - Texto das abas de ajuda → `textoComoFunciona()` e `textoSeDerErro()`, no fim da
   classe `Janela`. É HTML, e **o fonte não tem um único caractere fora do ASCII**:
@@ -165,6 +202,8 @@ programa continua sem dependência nenhuma).
 2. Confirmar se as colunas da aba Base são mesmo A até I.
 3. Confirmar se o sistema de destino aceita a linha em branco inicial; se não,
    `saida.linhaEmBrancoNoInicio=false`.
-4. Conferir se a aba da planilha real se chama "PRINCIPAL" mesmo. O programa
-   agora aguenta as duas grafias, mas o aviso na tela fica aparecendo até o
-   `planilha.abaPrincipal` do config bater com o nome de verdade.
+4. Conferir se a aba da planilha real se chama "PRINCIPAL" mesmo — só importa
+   para quem usar `controle.usarAbaPrincipal=true`.
+5. Depois de conferir o txt contra o da macro, **apagar a aba Principal da
+   planilha de verdade**: o programa não precisa mais dela, e aba que existe é
+   aba onde alguém digita por engano.

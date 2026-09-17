@@ -39,6 +39,10 @@ teste. A saída dele é o que se manda para quem for ajudar.
 6100|002|MARIA & CIA|1000|01/02/2026|10|ok|A|B|C|
 ```
 
+A planilha só precisa da aba **Base**. A antiga aba `Principal` existia para
+montar o nome do arquivo e dizer onde salvar — hoje isso é do programa, e uma aba
+a menos é uma aba a menos para alguém digitar por engano.
+
 Um par `6000`/`6100` por linha preenchida da aba **Base**, gravado em
 **windows-1252** com quebra **CRLF**, começando com uma linha em branco — do
 mesmo jeito que o `Print #` do VBA fazia.
@@ -50,13 +54,16 @@ Abra o `config.properties` no Bloco de Notas. Os pontos que mais se mexe:
 | Chave | Para que serve |
 | --- | --- |
 | `planilha.caminho` | onde está a planilha (barra normal: `C:/pasta/arquivo.xlsm`) |
-| `planilha.abaPrincipal` / `planilha.abaBase` | nomes das abas |
+| `planilha.abaBase` | nome da aba com os dados |
+| `saida.empresa` / `saida.tipo` / `saida.competencia` | o que monta o nome do arquivo |
+| `saida.pasta` | onde gravar |
+| `saida.nomePadrao` | molde do nome: `{empresa}_{tipo}_{competencia}` |
+| `controle.usarAbaPrincipal` | `true` volta a ler B6/B7/B9/B10 da aba Principal |
 | `base.colunaInicial` / `base.colunaFinal` / `base.linhaInicial` | intervalo lido da Base |
 | `base.pararNaLinhaVazia` | `true` volta ao jeito da macro: para na primeira linha vazia |
 | `layout.*` | prefixos, separador e os campos do 6000 |
 | `saida.codificacao` / `saida.quebraLinha` | como o txt é gravado |
 | `saida.sobrescrever` | `recusar` (igual à macro), `perguntar` ou `sempre` |
-| `saida.destino` | caminho do txt; em branco usa a pasta (B9) e o nome (B10) da aba Principal |
 
 > Barra invertida é caractere de escape em `.properties`: escreva o caminho com
 > barra normal (`C:/pasta`) ou dupla (`C:\\pasta`). Barra simples engole o
@@ -66,10 +73,11 @@ Abra o `config.properties` no Bloco de Notas. Os pontos que mais se mexe:
 
 Três abas:
 
-- **Gerar arquivo** — a tela de trabalho: planilha, destino e o resultado. O campo
-  **Abas** mostra os nomes que existem de verdade na planilha, que é onde se
-  confere a grafia. O **Registro** colore cada linha: aviso em laranja, erro em
-  vermelho, resultado em verde. Embaixo, o resumo da última geração.
+- **Gerar arquivo** — a tela de trabalho. Você preenche **Empresa**, **Tipo** e
+  **Competência**, escolhe a **Pasta**, e a linha azul mostra em tempo real o
+  arquivo exato que vai ser gravado: `744_PARCELAMENTOS_082025.txt`. O campo
+  **Abas** mostra os nomes que existem de verdade na planilha. O **Registro**
+  colore cada linha: aviso em laranja, erro em vermelho, resultado em verde.
 - **Como funciona** — o manual, dentro do programa: o que ele faz, o que espera em
   B6, B7, B9 e B10, o que espera na aba Base, o que sai no txt e como usar.
 - **Se der erro** — o que na planilha faz o programa parar e como resolver, o que
