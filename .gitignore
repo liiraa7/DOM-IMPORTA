@@ -4,3 +4,6 @@ gerador_arquivo.log
 gerador_arquivo.log.*
 exemplo/saida-do-teste.txt
 __pycache__/
+
+# o .vscode/ vai para o repositorio de proposito:
+# sao as tarefas do rito, nao configuracao pessoal
