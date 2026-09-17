@@ -1,0 +1,6 @@
+out/
+*.class
+gerador_arquivo.log
+gerador_arquivo.log.*
+exemplo/saida-do-teste.txt
+__pycache__/
