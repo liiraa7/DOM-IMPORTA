@@ -27,6 +27,14 @@ DUVIDAS
       "Como funciona" - o que ele faz e o que espera na planilha
       "Se der erro"   - o que costuma dar errado e como resolver
 
+ATUALIZAR, QUANDO SAIR VERSAO NOVA
+   Voce vai receber uma pasta pequena, com o atualizar.bat e o
+   arquivo gerador-arquivo-txt.jar dentro.
+   De dois cliques no  atualizar.bat  - com o programa FECHADO.
+   Ele acha o programa instalado sozinho, de qualquer pasta onde
+   estiver, e nao mexe nas suas configuracoes.
+   Nao precisa desinstalar nem instalar de novo.
+
 DESINSTALAR
    De dois cliques em  desinstalar.bat
 

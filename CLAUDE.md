@@ -233,6 +233,18 @@ Detalhes que custaram teste:
   `logo.png` (7 tamanhos, PNG dentro do ICO). Só precisa rodar quando o logo
   mudar.
 
+### Atualizar quem já tem instalado
+Entre uma versão e outra **só muda o jar** (66 KB): o `.exe` e os 83 MB de Java
+embutido são fixos. Por isso o `criar-instalador.bat` também monta
+`dist\atualizacao\` com três arquivos — `atualizar.bat`,
+`gerador-arquivo-txt.jar` e `config-modelo.properties`.
+
+O `atualizar.bat` **não precisa ficar dentro da pasta do programa**: ele acha a
+instalação sozinho em `%LOCALAPPDATA%\Adapted Dom Import\app`. Antes de copiar
+ele confere se o programa está aberto (`tasklist`), porque o Windows trava o jar
+em uso, e guarda a versão anterior como `.anterior`, para dar para voltar atrás.
+O `config.properties` da pessoa não é tocado.
+
 ## Rito antes de empacotar
 1. `javac --release 8 -Xlint:all,-options -Werror -encoding UTF-8 -d out src\...\GeradorArquivo.java`
    (tem de passar sem um warning sequer; o `-options` só cala o aviso do JDK

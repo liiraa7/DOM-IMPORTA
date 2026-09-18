@@ -75,7 +75,15 @@ if errorlevel 1 (
 )
 copy /y instalador\instalar.bat dist\ >nul
 copy /y instalador\desinstalar.bat dist\ >nul
+copy /y instalador\atualizar.bat dist\ >nul
 copy /y instalador\LEIA-ME.txt dist\ >nul
+
+rem  Pacote de atualizacao: quem ja tem o programa instalado so precisa
+rem  destes dois arquivos - 70 KB em vez dos 83 MB da instalacao inteira.
+mkdir dist\atualizacao 2>nul
+copy /y gerador-arquivo-txt.jar dist\atualizacao\ >nul
+copy /y config-modelo.properties dist\atualizacao\ >nul
+copy /y instalador\atualizar.bat dist\atualizacao\ >nul
 
 echo.
 echo [4/4] tentando montar tambem o instalador .msi...
@@ -108,12 +116,18 @@ echo ============================================
 echo  PRONTO
 echo ============================================
 echo.
-echo Para levar para outra maquina:
+echo INSTALAR PELA PRIMEIRA VEZ:
 echo   1. compacte a pasta  dist  inteira em um zip
 echo   2. na outra maquina, descompacte em qualquer lugar
 echo   3. rode o  instalar.bat  que esta dentro
 echo.
 echo A maquina de destino NAO precisa ter Java: ele vai embutido.
+echo.
+echo ATUALIZAR QUEM JA TEM:
+echo   mande so a pasta  dist\atualizacao  - sao 70 KB.
+echo   A pessoa roda o atualizar.bat de onde quiser, de qualquer
+echo   pasta: ele acha o programa instalado sozinho e nao mexe
+echo   nas configuracoes dela.
 echo.
 pause
 endlocal

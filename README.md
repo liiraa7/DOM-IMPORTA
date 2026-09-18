@@ -71,6 +71,16 @@ Pronto — atalho na área de trabalho e no menu Iniciar.
 Se a máquina tiver o WiX Toolset v3, o `criar-instalador.bat` gera também um
 `.msi` de verdade, para instalar com duplo clique sem o `.bat`.
 
+### Atualizar quem já tem
+
+Entre uma versão e outra só muda o jar — 66 KB. O `criar-instalador.bat` monta
+`dist\atualizacao\` com o `atualizar.bat` e o jar novo dentro.
+
+Mande **só essa pasta** (70 KB). A pessoa dá dois cliques no `atualizar.bat`, com
+o programa fechado. Ele acha a instalação sozinho, de qualquer pasta onde estiver,
+e **não mexe nas configurações dela**. A versão anterior fica guardada como
+`.anterior`, caso precise voltar atrás.
+
 ## A planilha de quem usa
 
 Só precisa da aba **Base**: uma linha por registro, a partir da linha 2 (a linha 1
