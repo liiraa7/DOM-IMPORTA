@@ -80,7 +80,7 @@ import javax.xml.stream.XMLStreamReader;
 public final class GeradorArquivo {
 
     static final String VERSAO = "3.7.0";
-    static final String NOME_PROGRAMA = "Adapted Dom Import";
+    static final String NOME_PROGRAMA = "ADAPTED DOM IMPORT";
     static final String AUTOR = "Ronald Lira";
     static final String EMPRESA = "Triangulo Contabilidade";
     static final String NOME_CONFIG = "config.properties";
