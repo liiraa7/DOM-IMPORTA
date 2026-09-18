@@ -79,7 +79,7 @@ import javax.xml.stream.XMLStreamReader;
  */
 public final class GeradorArquivo {
 
-    static final String VERSAO = "3.8.0";
+    static final String VERSAO = "3.8.1";
     static final String NOME_PROGRAMA = "ADAPTED DOM IMPORT";
     static final String AUTOR = "Ronald Lira";
     static final String EMPRESA = "Triangulo Contabilidade";
@@ -523,8 +523,16 @@ public final class GeradorArquivo {
                 }
                 for (Map.Entry<String, String> e : valores.entrySet()) {
                     if (!achadas.contains(e.getKey())) {
-                        sb.append(fim).append(e.getKey()).append("=").append(e.getValue());
+                        // sem isto, um config terminado em quebra de linha ganha
+                        // uma linha em branco a cada chave nova
+                        if (sb.length() > 0 && !terminaCom(sb, fim)) {
+                            sb.append(fim);
+                        }
+                        sb.append(e.getKey()).append("=").append(e.getValue());
                     }
+                }
+                if (!terminaCom(sb, fim)) {
+                    sb.append(fim);
                 }
                 Files.write(arquivo.toPath(), sb.toString().getBytes("ISO-8859-1"));
             } catch (IOException e) {
@@ -551,6 +559,11 @@ public final class GeradorArquivo {
                 nome = nome.substring(0, nome.length() - 1);
             }
             return nome.trim();
+        }
+
+        private static boolean terminaCom(StringBuilder sb, String fim) {
+            return sb.length() >= fim.length()
+                    && sb.substring(sb.length() - fim.length()).equals(fim);
         }
 
         private static String texto(Properties p, String chave, String padrao) {
