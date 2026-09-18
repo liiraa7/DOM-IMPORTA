@@ -6,7 +6,7 @@ e `ISel` de uma planilha do escritório. A empresa remove/desativa macros com
 frequência, obrigando a refazer o processo na mão. Agora a planilha fica limpa:
 o programa apenas LÊ o arquivo e escreve o txt no layout 6000/6100.
 
-Versão atual: **3.8.0**. Autor: **Ronald Lira** (Triangulo Contabilidade). Classe única `GeradorArquivo.java`
+Versão atual: **3.9.0**. Autor: **Ronald Lira** (Triangulo Contabilidade). Classe única `GeradorArquivo.java`
 (pacote `br.com.triangulo.gerador`), **sem dependência externa**.
 
 Histórico: começou em Python (1.0.1, Tkinter), virou Java em 15/09/2026 porque o
@@ -62,6 +62,18 @@ empacotamento para instalar na máquina dos outros.
   config para `%APPDATA%\Adapted Dom Import`, copiando o que veio instalado.
   O teste de escrita é escrever de verdade, porque `canWrite()` mente em
   algumas pastas do Windows.
+
+A **3.9.0** tirou o `config.properties` do repositório. Ele é reescrito pelo
+programa a cada geração e é diferente em cada máquina — ficava causando
+conflito em todo `git pull`, e um colega que instalasse herdava a pasta e a
+competência de quem empacotou. Agora:
+
+- o repositório guarda o **`config-modelo.properties`** (molde, com os campos
+  em branco);
+- o `config.properties` está no `.gitignore`;
+- na primeira abertura o programa copia o modelo (`configDoUsuario()`), e os
+  `.bat` fazem o mesmo antes de rodar;
+- o `criar-instalador.bat` empacota o **modelo**, nunca o config de quem montou.
 
 ## A planilha de verdade (print de 17/09/2026)
 A aba Principal da planilha do escritório era assim — e é dela que vieram os
@@ -143,8 +155,10 @@ A aba "Padrao" não existe mais no fluxo: as linhas são montadas na memória.
    não preferência: ele travou instalando Maven e o programa tem de compilar
    com um `javac` só.
 3. **Classe única.** Não quebrar em vários arquivos.
-4. **O programa NUNCA escreve na planilha.** Só lê. (Escreve no txt e na linha
-   `saida.destino` do `config.properties`, mais nada.)
+4. **O programa NUNCA escreve na planilha.** Só lê. (Escreve o txt e, no
+   `config.properties`, as linhas `saida.empresa`, `saida.tipo`,
+   `saida.competencia`, `saida.pasta`, `saida.ultimoArquivo` e
+   `saida.ultimaGeracao` — mais nada.)
 5. **Toda entrega termina com o `.jar` recompilado**, não só o `.java` — sem
    JDK na ponta, o fonte sozinho não serve para nada.
 
@@ -227,7 +241,9 @@ meio e uma fórmula com o valor já calculado. Para recriá-la:
 programa continua sem dependência nenhuma).
 
 ## Onde mexer
-- Layout, colunas, codificação, células de controle → `config.properties`.
+- Layout, colunas, codificação, células de controle → `config.properties` (o seu,
+  local). Mudança que todos devem receber vai no **`config-modelo.properties`**,
+  que é o que está versionado e o que o instalador leva.
 - Ordem ou separador do nome do arquivo → `saida.nomePadrao` no config. As peças
   são `{empresa}`, `{tipo}` e `{competencia}`; peça vazia não deixa separador
   solto (`744__082025` sai `744_082025`).

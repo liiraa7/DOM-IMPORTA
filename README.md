@@ -73,7 +73,12 @@ Se a máquina tiver o WiX Toolset v3, o `criar-instalador.bat` gera também um
 
 ## Configuração
 
-Abra o `config.properties` no Bloco de Notas. Os pontos que mais se mexe:
+Abra o `config.properties` no Bloco de Notas. Ele é criado na primeira abertura
+a partir do `config-modelo.properties` e fica só na sua máquina — o programa o
+reescreve a cada geração, por isso ele não vai para o repositório. Para mudar o
+que **todo mundo** recebe, edite o modelo.
+
+Os pontos que mais se mexe:
 
 | Chave | Para que serve |
 | --- | --- |

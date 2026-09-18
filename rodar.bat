@@ -3,6 +3,14 @@ chcp 1252 >nul
 setlocal
 cd /d "%~dp0"
 
+rem  Primeira vez nesta maquina: o config nasce do modelo.
+if not exist "config.properties" (
+  if exist "config-modelo.properties" (
+    copy /y "config-modelo.properties" "config.properties" >nul
+    echo Criei o config.properties a partir do modelo.
+  )
+)
+
 set "JAR=%~dp0gerador-arquivo-txt.jar"
 
 if not exist "%JAR%" (

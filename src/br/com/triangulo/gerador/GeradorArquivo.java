@@ -79,11 +79,12 @@ import javax.xml.stream.XMLStreamReader;
  */
 public final class GeradorArquivo {
 
-    static final String VERSAO = "3.8.1";
+    static final String VERSAO = "3.9.0";
     static final String NOME_PROGRAMA = "ADAPTED DOM IMPORT";
     static final String AUTOR = "Ronald Lira";
     static final String EMPRESA = "Triangulo Contabilidade";
     static final String NOME_CONFIG = "config.properties";
+    static final String NOME_MODELO = "config-modelo.properties";
     static final String NOME_LOG = "gerador_arquivo.log";
 
     private static final Logger LOG = Logger.getLogger(GeradorArquivo.class.getName());
@@ -270,22 +271,37 @@ public final class GeradorArquivo {
      * pasta do usuario, levando junto uma copia do config que veio instalado.
      */
     static File configDoUsuario() {
-        File naPasta = new File(pastaBase(), NOME_CONFIG);
-        if (podeEscrever(pastaBase())) {
-            return naPasta;
+        File pastaPrograma = pastaBase();
+        File naPasta = new File(pastaPrograma, NOME_CONFIG);
+        File escolhido = naPasta;
+        if (!podeEscrever(pastaPrograma)) {
+            File pastaUsuario = pastaDoUsuario();
+            File config = new File(pastaUsuario, NOME_CONFIG);
+            if (!config.isFile() && naPasta.isFile()
+                    && (pastaUsuario.isDirectory() || pastaUsuario.mkdirs())) {
+                copiar(naPasta, config);
+            }
+            escolhido = config;
         }
-        File pastaUsuario = pastaDoUsuario();
-        File config = new File(pastaUsuario, NOME_CONFIG);
-        if (!config.isFile() && naPasta.isFile()) {
-            try {
-                if (pastaUsuario.isDirectory() || pastaUsuario.mkdirs()) {
-                    Files.copy(naPasta.toPath(), config.toPath());
+        // primeira vez nesta maquina: o config nasce do modelo que veio junto
+        if (!escolhido.isFile()) {
+            File modelo = new File(pastaPrograma, NOME_MODELO);
+            if (modelo.isFile()) {
+                File pai = escolhido.getAbsoluteFile().getParentFile();
+                if (pai == null || pai.isDirectory() || pai.mkdirs()) {
+                    copiar(modelo, escolhido);
                 }
-            } catch (IOException e) {
-                LOG.log(Level.WARNING, "nao consegui copiar o config para a pasta do usuario", e);
             }
         }
-        return config;
+        return escolhido;
+    }
+
+    private static void copiar(File origem, File destino) {
+        try {
+            Files.copy(origem.toPath(), destino.toPath());
+        } catch (IOException e) {
+            LOG.log(Level.WARNING, "nao consegui criar " + destino.getAbsolutePath(), e);
+        }
     }
 
     private static File pastaDoUsuario() {
@@ -1981,7 +1997,11 @@ public final class GeradorArquivo {
          */
         private void mostrarAbas() {
             String caminho = campoPlanilha.getText().trim();
-            if (vazio(caminho) || !new File(caminho).isFile()) {
+            if (vazio(caminho)) {
+                problemaNaPlanilha("Escolha a planilha no botao Selecionar...");
+                return;
+            }
+            if (!new File(caminho).isFile()) {
                 problemaNaPlanilha("Planilha nao encontrada neste caminho.");
                 return;
             }

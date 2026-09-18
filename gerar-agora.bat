@@ -15,6 +15,14 @@ rem
 rem  E deixe saida.sobrescrever=sempre no config.properties, senao a
 rem  segunda execucao recusa gravar porque o txt do dia anterior existe.
 
+rem  Primeira vez nesta maquina: o config nasce do modelo.
+if not exist "config.properties" (
+  if exist "config-modelo.properties" (
+    copy /y "config-modelo.properties" "config.properties" >nul
+    echo Criei o config.properties a partir do modelo.
+  )
+)
+
 set "PAUSAR=1"
 if /i "%~1"=="--agendador" set "PAUSAR="
 

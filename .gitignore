@@ -1,4 +1,8 @@
 out/
+
+# de cada maquina: o programa reescreve a cada geracao.
+# o que vai no repositorio e o config-modelo.properties
+config.properties
 build/
 dist/
 *.class

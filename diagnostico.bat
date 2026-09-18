@@ -17,6 +17,14 @@ if errorlevel 1 echo     NAO ENCONTRADO - falta o Java de execucao
 java -version 2>&1
 echo.
 
+if not exist "config.properties" (
+  if exist "config-modelo.properties" (
+    copy /y "config-modelo.properties" "config.properties" >nul
+    echo Criei o config.properties a partir do modelo.
+    echo.
+  )
+)
+
 echo ARQUIVOS NESTA PASTA:
 if exist "gerador-arquivo-txt.jar" (echo     jar ................. OK) else (echo     jar ................. FALTANDO)
 if exist "config.properties" (echo     config.properties .... OK) else (echo     config.properties .... FALTANDO)

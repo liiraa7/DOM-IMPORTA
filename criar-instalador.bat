@@ -47,7 +47,10 @@ echo [2/4] separando o que vai dentro do aplicativo...
 if exist build rmdir /s /q build
 mkdir build\staging
 copy /y gerador-arquivo-txt.jar build\staging\ >nul
-copy /y config.properties build\staging\ >nul
+rem  Vai o MODELO, nao o seu config: o colega nao pode herdar a sua pasta
+rem  nem a sua competencia. Na primeira abertura o programa cria o
+rem  config.properties dele a partir deste modelo.
+copy /y config-modelo.properties build\staging\ >nul
 
 echo [3/4] montando o aplicativo com o Java embutido...
 if exist dist rmdir /s /q dist
