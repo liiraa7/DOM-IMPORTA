@@ -69,7 +69,7 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 /**
- * Adapted Dom Import - gerador do arquivo TXT no layout 6000/6100.
+ * ADAPTED DOM IMPORT - gerador do arquivo TXT no layout 6000/6100.
  *
  * Substitui as macros VBA lDom, ISel e Verifica_Arquivo: le a planilha
  * (.xlsx/.xlsm) e escreve o txt. NUNCA escreve na planilha.
@@ -80,7 +80,7 @@ import javax.xml.stream.XMLStreamReader;
 public final class GeradorArquivo {
 
     static final String VERSAO = "3.8.0";
-    static final String NOME_PROGRAMA = "Adapted Dom Import";
+    static final String NOME_PROGRAMA = "ADAPTED DOM IMPORT";
     static final String AUTOR = "Ronald Lira";
     static final String EMPRESA = "Triangulo Contabilidade";
     static final String NOME_CONFIG = "config.properties";
@@ -2192,7 +2192,7 @@ public final class GeradorArquivo {
             return ""
                 + "<html><body style='font-family:sans-serif; font-size:12px; margin:4px 10px 10px "
                 + "10px'> "
-                + "<h2 style='color:#102E54; margin-bottom:2px'>Adapted Dom Import</h2> "
+                + "<h2 style='color:#102E54; margin-bottom:2px'>ADAPTED DOM IMPORT</h2> "
                 + "<div style='color:#5F6976'>O que este programa faz, e o que ele espera encontrar na "
                 + "planilha.</div> "
                 + "<hr> "
