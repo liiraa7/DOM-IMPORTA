@@ -1,4 +1,4 @@
-# Adapted Dom Import — briefing do projeto
+# ADAPTED DOM IMPORT — briefing do projeto
 
 ## O que é
 Programa Java standalone que substitui as macros VBA `lDom`, `Verifica_Arquivo`
@@ -35,7 +35,7 @@ quando o nome tem a cara `EMPRESA_TIPO_COMPETENCIA`).
 
 A 3.6.0 trocou a xícara do Java pelo logo do escritório: ele é o ícone da janela
 (barra de título, barra de tarefas, Alt+Tab) e aparece na faixa azul, ao lado do
-título. A 3.7.0 batizou o programa de **Adapted Dom Import** (constante
+título. A 3.7.0 batizou o programa de **ADAPTED DOM IMPORT** (constante
 `NOME_PROGRAMA`) e tirou da tela o que era conversa interna: o subtítulo do
 layout 6000/6100 e das macros, o nome da chave `saida.nomePadrao` na dica, e o
 caminho do config no Registro (continua no rodapé e no log). A lista de abas

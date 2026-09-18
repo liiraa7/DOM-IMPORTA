@@ -1,4 +1,4 @@
-# Adapted Dom Import
+# ADAPTED DOM IMPORT
 
 Antigo "Gerador de Arquivo TXT". Programa Java que lê a planilha do escritório e
 grava o txt no layout **6000/6100**. Substitui as macros VBA `lDom`, `ISel` e `Verifica_Arquivo`, que

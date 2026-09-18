@@ -69,7 +69,7 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 /**
- * Adapted Dom Import - gerador do arquivo TXT no layout 6000/6100.
+ * ADAPTED DOM IMPORT - gerador do arquivo TXT no layout 6000/6100.
  *
  * Substitui as macros VBA lDom, ISel e Verifica_Arquivo: le a planilha
  * (.xlsx/.xlsm) e escreve o txt. NUNCA escreve na planilha.
