@@ -1,4 +1,6 @@
 out/
+build/
+dist/
 *.class
 gerador_arquivo.log
 gerador_arquivo.log.*

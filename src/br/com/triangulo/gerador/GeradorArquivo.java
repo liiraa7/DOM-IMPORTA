@@ -79,7 +79,7 @@ import javax.xml.stream.XMLStreamReader;
  */
 public final class GeradorArquivo {
 
-    static final String VERSAO = "3.7.0";
+    static final String VERSAO = "3.8.0";
     static final String NOME_PROGRAMA = "Adapted Dom Import";
     static final String AUTOR = "Ronald Lira";
     static final String EMPRESA = "Triangulo Contabilidade";
@@ -113,7 +113,7 @@ public final class GeradorArquivo {
             }
         }
         if (arquivoConfig == null) {
-            arquivoConfig = new File(pastaBase(), NOME_CONFIG);
+            arquivoConfig = configDoUsuario();
         }
         prepararLog(arquivoConfig.getAbsoluteFile().getParentFile());
         if (console) {
@@ -138,6 +138,12 @@ public final class GeradorArquivo {
             System.out.println("planilha = " + cfg.planilhaCaminho);
             // caminho vazio = deixa o programa montar o nome dos campos do config
             Resultado r = gerar(cfg, "", new Confirmacao() {
+                public boolean gerarDeNovo(File arquivo, String quando) {
+                    // No agendador nao ha ninguem para responder: avisa e segue.
+                    System.out.println("AVISO: este arquivo ja havia sido gerado em " + quando + ".");
+                    return true;
+                }
+
                 public boolean sobrescrever(File arquivo) {
                     java.io.Console console = System.console();
                     if (console == null) {
@@ -258,6 +264,55 @@ public final class GeradorArquivo {
         return new File(System.getProperty("user.dir", "."));
     }
 
+    /**
+     * Onde ficam config e log. Normalmente e a pasta do programa; se ela nao
+     * aceitar escrita - instalado em Program Files, por exemplo - vai para a
+     * pasta do usuario, levando junto uma copia do config que veio instalado.
+     */
+    static File configDoUsuario() {
+        File naPasta = new File(pastaBase(), NOME_CONFIG);
+        if (podeEscrever(pastaBase())) {
+            return naPasta;
+        }
+        File pastaUsuario = pastaDoUsuario();
+        File config = new File(pastaUsuario, NOME_CONFIG);
+        if (!config.isFile() && naPasta.isFile()) {
+            try {
+                if (pastaUsuario.isDirectory() || pastaUsuario.mkdirs()) {
+                    Files.copy(naPasta.toPath(), config.toPath());
+                }
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "nao consegui copiar o config para a pasta do usuario", e);
+            }
+        }
+        return config;
+    }
+
+    private static File pastaDoUsuario() {
+        String appdata = System.getenv("APPDATA");
+        if (!vazio(appdata)) {
+            return new File(appdata, NOME_PROGRAMA);
+        }
+        return new File(System.getProperty("user.home", "."), "." + NOME_PROGRAMA.replace(' ', '-'));
+    }
+
+    /** canWrite() mente em algumas pastas do Windows; escrever de verdade, nao. */
+    private static boolean podeEscrever(File pasta) {
+        File teste = new File(pasta, ".teste-de-escrita.tmp");
+        try {
+            if (teste.createNewFile()) {
+                return teste.delete();
+            }
+            return teste.isFile() && teste.delete();
+        } catch (IOException e) {
+            LOG.log(Level.FINE, "pasta do programa nao aceita escrita: " + pasta, e);
+            return false;
+        } catch (SecurityException e) {
+            LOG.log(Level.FINE, "pasta do programa protegida: " + pasta, e);
+            return false;
+        }
+    }
+
     private static void prepararLog(File pasta) {
         try {
             File destino = new File(pasta, NOME_LOG);
@@ -289,6 +344,8 @@ public final class GeradorArquivo {
         String competencia;
         String pasta;
         String nomePadrao;
+        String ultimoArquivo;
+        String ultimaGeracao;
         String colunaInicial;
         String colunaFinal;
         int linhaInicial;
@@ -327,6 +384,8 @@ public final class GeradorArquivo {
             cfg.competencia = texto(p, "saida.competencia", "");
             cfg.pasta = texto(p, "saida.pasta", "");
             cfg.nomePadrao = texto(p, "saida.nomePadrao", "{empresa}_{tipo}_{competencia}");
+            cfg.ultimoArquivo = texto(p, "saida.ultimoArquivo", "");
+            cfg.ultimaGeracao = texto(p, "saida.ultimaGeracao", "");
             cfg.colunaInicial = texto(p, "base.colunaInicial", "A").toUpperCase();
             cfg.colunaFinal = texto(p, "base.colunaFinal", "I").toUpperCase();
             cfg.linhaInicial = inteiro(p, "base.linhaInicial", 2);
@@ -413,15 +472,30 @@ public final class GeradorArquivo {
          * Caminho sempre com barra normal: no .properties a barra invertida e
          * escape e engoliria o caractere seguinte.
          */
-        void gravarCampos(String ultimoArquivo) {
+        void gravarCampos(String arquivoGerado) {
+            String quando = java.time.LocalDateTime.now()
+                    .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
             Map<String, String> valores = new LinkedHashMap<String, String>();
             valores.put("saida.empresa", empresa);
             valores.put("saida.tipo", tipo);
             valores.put("saida.competencia", competencia);
             valores.put("saida.pasta", pasta == null ? "" : pasta.replace('\\', '/'));
             valores.put("saida.ultimoArquivo",
-                    ultimoArquivo == null ? "" : ultimoArquivo.replace('\\', '/'));
+                    arquivoGerado == null ? "" : arquivoGerado.replace('\\', '/'));
+            valores.put("saida.ultimaGeracao", quando);
             gravar(valores);
+            ultimoArquivo = arquivoGerado == null ? "" : arquivoGerado;
+            ultimaGeracao = quando;
+        }
+
+        /** Este arquivo ja foi gerado antes? Devolve quando, ou null. */
+        String geradoAntes(File destino) {
+            if (vazio(ultimoArquivo) || vazio(ultimaGeracao)) {
+                return null;
+            }
+            String antes = ultimoArquivo.replace('\\', '/');
+            String agora = destino.getAbsolutePath().replace('\\', '/');
+            return antes.equalsIgnoreCase(agora) ? ultimaGeracao : null;
         }
 
         private void gravar(Map<String, String> valores) {
@@ -1087,9 +1161,22 @@ public final class GeradorArquivo {
         }
     }
 
-    /** Perguntado quando o txt ja existe e saida.sobrescrever=perguntar. */
+    /** Perguntas que so a tela sabe fazer; no modo console ninguem responde. */
     interface Confirmacao {
+        /** O txt ja existe e saida.sobrescrever=perguntar. */
         boolean sobrescrever(File arquivo);
+
+        /** Este mesmo arquivo ja foi gerado antes, em "quando". */
+        boolean gerarDeNovo(File arquivo, String quando);
+    }
+
+    /** A pessoa desistiu na pergunta - nao e erro, nao merece caixa vermelha. */
+    static final class Cancelado extends IOException {
+        private static final long serialVersionUID = 1L;
+
+        Cancelado(String mensagem) {
+            super(mensagem);
+        }
     }
 
     static Resultado gerar(Config cfg, String destinoEscolhido, Confirmacao confirmacao) throws IOException {
@@ -1119,6 +1206,19 @@ public final class GeradorArquivo {
         if (registros.isEmpty()) {
             throw new IllegalStateException("A aba \"" + cfg.abaBase + "\" nao tem nenhuma linha preenchida"
                     + " a partir da linha " + cfg.linhaInicial + ".");
+        }
+
+        // Numa rotina mensal, o engano mais facil e esquecer de trocar a
+        // competencia e gravar o mes novo por cima do anterior.
+        String quandoAntes = cfg.geradoAntes(destino);
+        if (quandoAntes != null) {
+            if (confirmacao == null) {
+                avisos.add("Este mesmo arquivo ja havia sido gerado em " + quandoAntes
+                        + ". Confira se a competencia esta certa.");
+            } else if (!confirmacao.gerarDeNovo(destino, quandoAntes)) {
+                throw new Cancelado("Geracao cancelada - o arquivo " + destino.getName()
+                        + " ja havia sido gerado em " + quandoAntes + ".");
+            }
         }
 
         conferirExistente(cfg, destino, confirmacao);
@@ -1358,6 +1458,7 @@ public final class GeradorArquivo {
         private final JTextField campoCompetencia = new JTextField(8);
         private final JTextField campoPasta = new JTextField(24);
         private final JLabel rotuloArquivo = new JLabel(" ");
+        private final JLabel rotuloRepetido = new JLabel(" ");
         private final JLabel rotuloAbas = new JLabel(" ");
         private final JLabel rotuloAbasTitulo = new JLabel("Atencao:");
         private final JTextPane registro = new JTextPane();
@@ -1615,6 +1716,12 @@ public final class GeradorArquivo {
             g.fill = GridBagConstraints.NONE;
 
             g.gridy = 5;
+            g.insets = new Insets(0, 6, 2, 6);
+            rotuloRepetido.setForeground(LARANJA);
+            rotuloRepetido.setVisible(false);
+            painel.add(negrito(rotuloRepetido), g);
+
+            g.gridy = 6;
             g.insets = new Insets(0, 6, 4, 6);
             JLabel dica = new JLabel("* obrigatorios. O nome do arquivo sai destes tres campos.");
             dica.setForeground(CINZA_TEXTO);
@@ -1669,9 +1776,20 @@ public final class GeradorArquivo {
                 return;
             }
             rotuloArquivo.setForeground(AZUL);
-            String caminho = new File(cfg.pasta, nome).getPath();
+            File destino = new File(cfg.pasta, nome);
+            String caminho = destino.getPath();
             rotuloArquivo.setText("Vai gravar: " + encurtar(caminho, 80));
             rotuloArquivo.setToolTipText(caminho);
+
+            // numa rotina mensal, o engano facil e esquecer de trocar a competencia
+            String quando = cfg.geradoAntes(destino.getAbsoluteFile());
+            if (quando == null) {
+                rotuloRepetido.setVisible(false);
+            } else {
+                rotuloRepetido.setVisible(true);
+                rotuloRepetido.setText("Atencao: este mesmo arquivo ja foi gerado em " + quando
+                        + ". A competencia esta certa?");
+            }
         }
 
         /** Corta o meio do caminho, que o fim - o nome do arquivo - e o que importa. */
@@ -1934,7 +2052,17 @@ public final class GeradorArquivo {
                 protected Resultado doInBackground() throws Exception {
                     return gerar(cfg, destino, new Confirmacao() {
                         public boolean sobrescrever(File arquivo) {
-                            return perguntarSobrescrever(arquivo);
+                            return perguntar("O arquivo ja existe:" + System.lineSeparator()
+                                    + arquivo.getAbsolutePath() + System.lineSeparator()
+                                    + System.lineSeparator() + "Sobrescrever?");
+                        }
+
+                        public boolean gerarDeNovo(File arquivo, String quando) {
+                            return perguntar("Este mesmo arquivo ja foi gerado em " + quando + ":"
+                                    + System.lineSeparator() + arquivo.getName()
+                                    + System.lineSeparator() + System.lineSeparator()
+                                    + "Confira se a competencia esta certa."
+                                    + System.lineSeparator() + "Gerar de novo assim mesmo?");
                         }
                     });
                 }
@@ -1951,6 +2079,7 @@ public final class GeradorArquivo {
                         escrever("arquivo: " + r.arquivo.getAbsolutePath(), null);
                         campoPasta.setText(r.arquivo.getAbsoluteFile().getParent());
                         ultimoArquivo = r.arquivo;
+                        atualizarPrevia();
                         botaoPasta.setEnabled(true);
                         botaoTxt.setEnabled(true);
                         String resumo = r.registros + " registros, " + r.bytes + " bytes, "
@@ -1961,6 +2090,11 @@ public final class GeradorArquivo {
                             estado(resumo, LARANJA, LARANJA_FUNDO);
                         }
                     } catch (Exception e) {
+                        if (desistencia(e)) {
+                            escrever("geracao cancelada - nada foi gravado.", CINZA_TEXTO);
+                            estado("cancelado", CINZA_TEXTO, AZUL_CLARO);
+                            return;
+                        }
                         LOG.log(Level.SEVERE, "falha ao gerar", e);
                         escrever("ERRO: " + mensagem(e), VERMELHO);
                         estado("falhou - veja o Registro e a aba Se der erro", VERMELHO,
@@ -1972,13 +2106,24 @@ public final class GeradorArquivo {
             }.execute();
         }
 
-        private boolean perguntarSobrescrever(File arquivo) {
+        /** A pessoa respondeu "nao" numa pergunta: encerra quieto. */
+        private static boolean desistencia(Throwable e) {
+            Throwable atual = e;
+            while (atual != null) {
+                if (atual instanceof Cancelado) {
+                    return true;
+                }
+                atual = atual.getCause();
+            }
+            return false;
+        }
+
+        /** Pergunta de sim/nao na tela, venha de qual thread vier. */
+        private boolean perguntar(final String texto) {
             final boolean[] resposta = new boolean[1];
             Runnable pergunta = new Runnable() {
                 public void run() {
-                    int escolha = JOptionPane.showConfirmDialog(Janela.this,
-                            "O arquivo ja existe:" + System.lineSeparator() + arquivo.getAbsolutePath()
-                                    + System.lineSeparator() + System.lineSeparator() + "Sobrescrever?",
+                    int escolha = JOptionPane.showConfirmDialog(Janela.this, texto,
                             NOME_PROGRAMA, JOptionPane.YES_NO_OPTION,
                             JOptionPane.QUESTION_MESSAGE);
                     resposta[0] = escolha == JOptionPane.YES_OPTION;
@@ -1991,7 +2136,7 @@ public final class GeradorArquivo {
                     SwingUtilities.invokeAndWait(pergunta);
                 }
             } catch (Exception e) {
-                LOG.log(Level.WARNING, "falha ao perguntar sobre sobrescrever", e);
+                LOG.log(Level.WARNING, "falha ao mostrar a pergunta", e);
                 return false;
             }
             return resposta[0];

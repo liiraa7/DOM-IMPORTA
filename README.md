@@ -21,6 +21,7 @@ arquivo, nunca escreve nele.
 | Recompilar depois de mexer no fonte | `compilar.bat` (precisa do JDK) |
 | Conferir a saída contra o gabarito | `exemplo\conferir.bat` |
 | Descobrir por que não abriu | `diagnostico.bat` |
+| Empacotar para instalar em outra máquina | `criar-instalador.bat` |
 
 O `config.properties` e o `gerador_arquivo.log` ficam na mesma pasta do jar — é
 o caminho que aparece no rodapé da janela.
@@ -46,6 +47,29 @@ a menos é uma aba a menos para alguém digitar por engano.
 Um par `6000`/`6100` por linha preenchida da aba **Base**, gravado em
 **windows-1252** com quebra **CRLF**, começando com uma linha em branco — do
 mesmo jeito que o `Print #` do VBA fazia.
+
+## Instalar na máquina de outra pessoa
+
+Na **sua** máquina, uma vez:
+
+```
+criar-instalador.bat
+```
+
+Ele monta a pasta `dist\` com o programa empacotado e o Java embutido. Compacte
+essa pasta num zip.
+
+Na **outra** máquina: descompactar o zip e dar dois cliques em `instalar.bat`.
+Pronto — atalho na área de trabalho e no menu Iniciar.
+
+- Não precisa de senha de administrador.
+- **Não precisa ter Java instalado**: ele vai dentro do programa.
+- Reinstalar por cima preserva o `config.properties` com os campos já
+  preenchidos.
+- Para remover: `desinstalar.bat`.
+
+Se a máquina tiver o WiX Toolset v3, o `criar-instalador.bat` gera também um
+`.msi` de verdade, para instalar com duplo clique sem o `.bat`.
 
 ## Configuração
 

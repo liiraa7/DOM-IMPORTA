@@ -1,0 +1,33 @@
+ADAPTED DOM IMPORT - instalacao
+===============================
+
+O QUE E
+   Programa que le a planilha e grava o arquivo txt de importacao
+   no layout 6000/6100, no lugar das macros do Excel.
+
+COMO INSTALAR
+   1. Descompacte este zip inteiro em qualquer pasta.
+      (rodar de dentro do zip NAO funciona)
+   2. De dois cliques em  instalar.bat
+   3. Pronto: o atalho fica na area de trabalho e no menu Iniciar.
+
+   Nao precisa de senha de administrador.
+   Nao precisa ter Java na maquina - ele vai embutido no programa.
+
+PRIMEIRA VEZ
+   Abra o programa e confira, na aba "Gerar arquivo":
+      - o caminho da Planilha
+      - Empresa, Tipo e Competencia
+      - a Pasta onde salvar
+   A linha azul mostra o arquivo exato que vai ser gravado.
+   Leia essa linha antes de clicar em Gerar arquivo.
+
+DUVIDAS
+   O proprio programa tem duas abas de ajuda:
+      "Como funciona" - o que ele faz e o que espera na planilha
+      "Se der erro"   - o que costuma dar errado e como resolver
+
+DESINSTALAR
+   De dois cliques em  desinstalar.bat
+
+   Ronald Lira - Triangulo Contabilidade

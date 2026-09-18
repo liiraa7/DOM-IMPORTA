@@ -1,7 +1,10 @@
 * text=auto eol=lf
 *.bat text eol=crlf
 *.properties text eol=crlf
+*.txt text eol=crlf
+# o gabarito e comparado byte a byte: git nao pode encostar nele
 exemplo/gabarito.txt -text
 *.xlsx binary
 *.xlsm binary
+*.ico binary
 *.jar binary

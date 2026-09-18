@@ -6,7 +6,7 @@ e `ISel` de uma planilha do escritório. A empresa remove/desativa macros com
 frequência, obrigando a refazer o processo na mão. Agora a planilha fica limpa:
 o programa apenas LÊ o arquivo e escreve o txt no layout 6000/6100.
 
-Versão atual: **3.7.0**. Autor: **Ronald Lira** (Triangulo Contabilidade). Classe única `GeradorArquivo.java`
+Versão atual: **3.8.0**. Autor: **Ronald Lira** (Triangulo Contabilidade). Classe única `GeradorArquivo.java`
 (pacote `br.com.triangulo.gerador`), **sem dependência externa**.
 
 Histórico: começou em Python (1.0.1, Tkinter), virou Java em 15/09/2026 porque o
@@ -45,6 +45,23 @@ aba dos dados — e aí mostra as que existem, que é quando isso serve.
 Os nomes de arquivo **não** mudaram: o jar continua `gerador-arquivo-txt.jar` e
 os .bat com os mesmos nomes, para não quebrar atalho nem tarefa agendada de
 quem já instalou.
+
+A **3.8.0** trouxe duas coisas: a guarda de competência repetida e o
+empacotamento para instalar na máquina dos outros.
+
+- **Guarda de competência**: o config guarda `saida.ultimoArquivo` e
+  `saida.ultimaGeracao`. Se o nome montado for igual ao da última geração, a
+  janela avisa em laranja (*"este mesmo arquivo já foi gerado em ..."*) e o
+  Gerar pergunta antes. É o engano mais provável numa rotina mensal: esquecer
+  de trocar a competência e gravar o mês novo por cima do anterior. No
+  `--console` não há quem responda, então vira aviso e segue — o agendador não
+  pode travar. Desistir na pergunta levanta `Cancelado`, que a janela trata em
+  cinza, sem caixa de erro: desistir não é falha.
+- **`config.properties` na pasta do usuário**: se a pasta do programa não
+  aceitar escrita (instalado em Program Files), `configDoUsuario()` leva o
+  config para `%APPDATA%\Adapted Dom Import`, copiando o que veio instalado.
+  O teste de escrita é escrever de verdade, porque `canWrite()` mente em
+  algumas pastas do Windows.
 
 ## A planilha de verdade (print de 17/09/2026)
 A aba Principal da planilha do escritório era assim — e é dela que vieram os
@@ -156,6 +173,32 @@ Para testar sem mexer no `config.properties` de produção existe o
 ```
 java -jar gerador-arquivo-txt.jar --console --config exemplo\config-exemplo.properties
 ```
+
+## Empacotamento (instalar na máquina dos outros)
+
+`criar-instalador.bat` roda **no Windows, com JDK 21**, e produz `dist\`:
+
+1. chama o `compilar.bat` (compila, confere o gabarito, monta o jar);
+2. `jpackage --type app-image` com `--icon instalador\logo.ico` → pasta
+   `dist\Adapted Dom Import\` com o `.exe` e **o Java embutido**;
+3. tenta também `--type msi` (precisa do WiX Toolset v3; sem ele, avisa e segue);
+4. copia para `dist\` o `instalar.bat`, o `desinstalar.bat` e o `LEIA-ME.txt`.
+
+Na máquina de destino: descompactar o zip e rodar `instalar.bat`. Ele copia para
+`%LOCALAPPDATA%\Adapted Dom Import`, cria atalho na área de trabalho e no menu
+Iniciar (via VBScript, usando `SpecialFolders`, que respeita Desktop redirecionado
+para o OneDrive) e **preserva o `config.properties` de uma instalação anterior**.
+Não pede senha de administrador e **não exige Java na máquina**.
+
+Detalhes que custaram teste:
+- `--add-modules java.base,java.desktop,java.logging,java.xml` derruba o Java
+  embutido de 157 MB para 83 MB. O `jdeps` não lista `java.xml` porque ele entra
+  junto com `java.desktop` — está declarado assim mesmo, de propósito.
+- A versão sai do próprio `GeradorArquivo.java` por `findstr`, para não existir
+  um segundo lugar para esquecer de atualizar.
+- O `.ico` do `.exe` é gerado por `exemplo/gerar-ico.py` a partir do
+  `logo.png` (7 tamanhos, PNG dentro do ICO). Só precisa rodar quando o logo
+  mudar.
 
 ## Rito antes de empacotar
 1. `javac --release 8 -Xlint:all,-options -Werror -encoding UTF-8 -d out src\...\GeradorArquivo.java`
