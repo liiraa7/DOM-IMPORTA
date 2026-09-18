@@ -79,7 +79,7 @@ import javax.xml.stream.XMLStreamReader;
  */
 public final class GeradorArquivo {
 
-    static final String VERSAO = "3.5.0";
+    static final String VERSAO = "3.6.0";
     static final String AUTOR = "Ronald Lira";
     static final String EMPRESA = "Triangulo Contabilidade";
     static final String NOME_CONFIG = "config.properties";
@@ -161,6 +161,74 @@ public final class GeradorArquivo {
             System.err.println("ERRO: " + mensagem(e));
             return 1;
         }
+    }
+
+    // ------------------------------------------------------------------
+    // logo do escritorio
+    // ------------------------------------------------------------------
+
+    private static java.awt.image.BufferedImage logoOriginal;
+    private static boolean logoProcurado;
+
+    /**
+     * Logo que vem dentro do jar, ao lado da classe. Devolve null se o arquivo
+     * nao estiver la - o programa roda sem logo, so fica com o icone padrao.
+     */
+    static java.awt.image.BufferedImage logo() {
+        if (!logoProcurado) {
+            logoProcurado = true;
+            InputStream in = GeradorArquivo.class.getResourceAsStream("logo.png");
+            if (in != null) {
+                try {
+                    logoOriginal = javax.imageio.ImageIO.read(in);
+                } catch (IOException e) {
+                    LOG.log(Level.FINE, "nao consegui ler o logo.png", e);
+                } finally {
+                    try {
+                        in.close();
+                    } catch (IOException e) {
+                        LOG.log(Level.FINE, "falha ao fechar o logo.png", e);
+                    }
+                }
+            }
+        }
+        return logoOriginal;
+    }
+
+    /** O logo redesenhado no tamanho pedido, com as bordas suavizadas. */
+    static java.awt.Image logoEm(int lado) {
+        java.awt.image.BufferedImage base = logo();
+        if (base == null) {
+            return null;
+        }
+        java.awt.image.BufferedImage destino = new java.awt.image.BufferedImage(lado, lado,
+                java.awt.image.BufferedImage.TYPE_INT_ARGB);
+        java.awt.Graphics2D g = destino.createGraphics();
+        g.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION,
+                java.awt.RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        g.setRenderingHint(java.awt.RenderingHints.KEY_RENDERING,
+                java.awt.RenderingHints.VALUE_RENDER_QUALITY);
+        g.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
+                java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+        g.drawImage(base, 0, 0, lado, lado, null);
+        g.dispose();
+        return destino;
+    }
+
+    /**
+     * Varios tamanhos do mesmo logo: o Windows escolhe um para a barra de
+     * titulo, outro para a barra de tarefas e outro para o Alt+Tab.
+     */
+    static List<java.awt.Image> icones() {
+        List<java.awt.Image> lista = new ArrayList<java.awt.Image>();
+        int[] tamanhos = {16, 20, 24, 32, 48, 64, 128, 256};
+        for (int i = 0; i < tamanhos.length; i++) {
+            java.awt.Image imagem = logoEm(tamanhos[i]);
+            if (imagem != null) {
+                lista.add(imagem);
+            }
+        }
+        return lista;
     }
 
     // ------------------------------------------------------------------
@@ -1310,6 +1378,10 @@ public final class GeradorArquivo {
             super("Gerador de Arquivo TXT v" + VERSAO + " - by " + AUTOR);
             this.arquivoConfig = arquivoConfig;
             setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            List<java.awt.Image> icones = icones();
+            if (!icones.isEmpty()) {
+                setIconImages(icones);
+            }
             JPanel miolo = new JPanel(new BorderLayout());
             miolo.setBackground(FUNDO);
             miolo.add(montarFaixa(), BorderLayout.NORTH);
@@ -1353,7 +1425,19 @@ public final class GeradorArquivo {
 
             GridBagConstraints g = new GridBagConstraints();
             g.anchor = GridBagConstraints.WEST;
-            g.gridx = 0;
+
+            java.awt.Image marca = logoEm(46);
+            if (marca != null) {
+                g.gridx = 0;
+                g.gridy = 0;
+                g.gridheight = 2;
+                g.insets = new Insets(0, 0, 0, 12);
+                faixa.add(new JLabel(new javax.swing.ImageIcon(marca)), g);
+                g.gridheight = 1;
+                g.insets = new Insets(0, 0, 0, 0);
+            }
+
+            g.gridx = 1;
             g.gridy = 0;
             JLabel titulo = new JLabel("Gerador de Arquivo TXT");
             titulo.setForeground(Color.WHITE);
@@ -1366,7 +1450,7 @@ public final class GeradorArquivo {
             subtitulo.setForeground(AZUL_CLARO);
             faixa.add(subtitulo, g);
 
-            g.gridx = 1;
+            g.gridx = 2;
             g.gridy = 0;
             g.gridheight = 2;
             g.weightx = 1;

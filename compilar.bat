@@ -39,6 +39,13 @@ javac --release 8 -Xlint:all,-options -Werror -encoding UTF-8 -d out "%FONTE%"
 if errorlevel 1 goto :falhou
 
 echo [2/3] montando o jar...
+rem  O logo do escritorio vai DENTRO do jar, ao lado da classe. Sem esta
+rem  copia o programa roda, mas volta para o icone padrao do Java.
+if exist "src\br\com\triangulo\gerador\logo.png" (
+  copy /y "src\br\com\triangulo\gerador\logo.png" "out\br\com\triangulo\gerador\" >nul
+) else (
+  echo AVISO: nao achei o logo.png. O programa vai ficar com o icone do Java.
+)
 jar --create --file gerador-arquivo-txt.jar ^
     --main-class br.com.triangulo.gerador.GeradorArquivo -C out .
 if errorlevel 1 goto :falhou

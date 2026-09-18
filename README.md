@@ -100,6 +100,7 @@ Atalhos: `Enter` gera o arquivo, `Alt+T` abre o txt gerado, `Alt+P` abre a pasta
 
 ```
 src/br/com/triangulo/gerador/GeradorArquivo.java   o programa inteiro
+src/br/com/triangulo/gerador/logo.png              o logo do escritorio
 config.properties                                  layout e caminhos
 compilar.bat  rodar.bat  gerar-agora.bat           atalhos do dia a dia
 exemplo/                                           planilha de teste + gabarito

@@ -6,7 +6,7 @@ e `ISel` de uma planilha do escritório. A empresa remove/desativa macros com
 frequência, obrigando a refazer o processo na mão. Agora a planilha fica limpa:
 o programa apenas LÊ o arquivo e escreve o txt no layout 6000/6100.
 
-Versão atual: **3.5.0**. Autor: **Ronald Lira** (Triangulo Contabilidade). Classe única `GeradorArquivo.java`
+Versão atual: **3.6.0**. Autor: **Ronald Lira** (Triangulo Contabilidade). Classe única `GeradorArquivo.java`
 (pacote `br.com.triangulo.gerador`), **sem dependência externa**.
 
 Histórico: começou em Python (1.0.1, Tkinter), virou Java em 15/09/2026 porque o
@@ -32,6 +32,10 @@ razão certa: aba que existe é aba onde alguém vai digitar por engano. O jeito
 antigo continua disponível em `controle.usarAbaPrincipal=true`, e um
 `saida.destino` de config velho é migrado sozinho (a pasta, e os três campos
 quando o nome tem a cara `EMPRESA_TIPO_COMPETENCIA`).
+
+A 3.6.0 trocou a xícara do Java pelo logo do escritório: ele é o ícone da janela
+(barra de título, barra de tarefas, Alt+Tab) e aparece na faixa azul, ao lado do
+título.
 
 ## A planilha de verdade (print de 17/09/2026)
 A aba Principal da planilha do escritório era assim — e é dela que vieram os
@@ -186,6 +190,12 @@ programa continua sem dependência nenhuma).
   o arquivo compila igual em qualquer máquina, com ou sem `-encoding UTF-8`. Para
   reescrever o texto com acento de verdade e converter, existe o
   `exemplo/gerar-ajuda.py`.
+- Logo → `src/br/com/triangulo/gerador/logo.png`, 256x256 com fundo
+  transparente. É **recurso, não código**: a regra da classe única continua
+  valendo. Ele é carregado de dentro do jar por `logo()` / `logoEm()` / `icones()`.
+  **O `compilar.bat` copia o png para `out/` antes de montar o jar** — sem essa
+  cópia o programa roda, mas volta para o ícone do Java. Quem compilar na mão
+  precisa copiar também. Trocar o logo é substituir o arquivo, nada mais.
 - Cores da tela → constantes no alto da classe `Janela` (`AZUL`, `VERDE`,
   `LARANJA`, `VERMELHO` e as versões `_FUNDO`).
 - O registro colorido é um `JTextPane`. Ele só quebra a linha entre palavras, e
