@@ -71,6 +71,25 @@ Pronto — atalho na área de trabalho e no menu Iniciar.
 Se a máquina tiver o WiX Toolset v3, o `criar-instalador.bat` gera também um
 `.msi` de verdade, para instalar com duplo clique sem o `.bat`.
 
+## A planilha de quem usa
+
+Só precisa da aba **Base**: uma linha por registro, a partir da linha 2 (a linha 1
+é cabeçalho e é ignorada).
+
+Para o pessoal começar do jeito certo existe o **`exemplo/modelo-base.xlsx`** —
+planilha em branco, com a aba já chamada `Base`, o cabeçalho pronto e as colunas
+formatadas: data como data, valor como número. Isso não é enfeite: célula
+formatada como data faz o Excel criar uma data de verdade quando a pessoa digita,
+em vez de um texto que sairia literal no arquivo.
+
+Ela não traz linha de exemplo de propósito — exemplo esquecido na planilha vira
+registro falso no txt. O exemplo está no próprio cabeçalho.
+
+> **O que manda é a posição da coluna, não o nome do cabeçalho.** O programa lê
+> coluna A, coluna B, coluna C... e não olha o que está escrito na linha 1. Quem
+> inventar outra ordem gera um arquivo trocado, e o programa não tem como
+> perceber.
+
 ## Configuração
 
 Abra o `config.properties` no Bloco de Notas. Ele é criado na primeira abertura

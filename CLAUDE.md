@@ -293,13 +293,29 @@ programa continua sem dependência nenhuma).
   `GeradorArquivo.formatarNumero()`, aí recompila.
 - Data com outro formato → `LeitorPlanilha.formatarData()`.
 
+## A planilha modelo para o pessoal
+`exemplo/modelo-base.xlsx`, feita por `exemplo/gerar-modelo-base.py`: só a aba
+`Base`, cabeçalho congelado e colunas formatadas (A como data, D com duas casas).
+A formatação é o ponto: célula de data faz o Excel criar data de verdade em vez
+de texto, que é a armadilha que o programa não consegue avisar. Sem linha de
+exemplo de propósito — exemplo esquecido vira registro falso no txt; o exemplo
+está no texto do cabeçalho.
+
+As colunas seguem o print da Base real de 18/09/2026:
+`A DATA | B débito | C crédito | D VALOR | E cód. histórico | F DESCRIÇÃO`.
+
 ## Pendências
 1. Testar com a planilha real e comparar o txt linha a linha com o da macro.
-2. Confirmar se as colunas da aba Base são mesmo A até I.
-3. Confirmar se o sistema de destino aceita a linha em branco inicial; se não,
+2. **Quantos campos o sistema espera?** A Base real tem 6 colunas (A–F), mas o
+   config vem com `base.colunaFinal=I`, o que acrescenta 3 campos vazios no fim
+   de cada linha. Confirmar contra um txt da macro.
+3. **Casas decimais.** `R$ 2.959,50` sai como `2959,5` — valor bruto, como o VBA
+   gravava. Se o sistema exigir sempre duas casas, criar uma regra por coluna no
+   config (`saida.casasDecimais=D:2`, por exemplo) em `formatarNumero()`.
+4. Confirmar se o sistema de destino aceita a linha em branco inicial; se não,
    `saida.linhaEmBrancoNoInicio=false`.
-4. Conferir se a aba da planilha real se chama "PRINCIPAL" mesmo — só importa
+5. Conferir se a aba da planilha real se chama "PRINCIPAL" mesmo — só importa
    para quem usar `controle.usarAbaPrincipal=true`.
-5. Depois de conferir o txt contra o da macro, **apagar a aba Principal da
+6. Depois de conferir o txt contra o da macro, **apagar a aba Principal da
    planilha de verdade**: o programa não precisa mais dela, e aba que existe é
    aba onde alguém digita por engano.
