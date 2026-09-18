@@ -6,7 +6,7 @@ e `ISel` de uma planilha do escritório. A empresa remove/desativa macros com
 frequência, obrigando a refazer o processo na mão. Agora a planilha fica limpa:
 o programa apenas LÊ o arquivo e escreve o txt no layout 6000/6100.
 
-Versão atual: **3.11.0**. Autor: **Ronald Lira** (Triangulo Contabilidade). Classe única `GeradorArquivo.java`
+Versão atual: **3.11.1**. Autor: **Ronald Lira** (Triangulo Contabilidade). Classe única `GeradorArquivo.java`
 (pacote `br.com.triangulo.gerador`), **sem dependência externa**.
 
 Histórico: começou em Python (1.0.1, Tkinter), virou Java em 15/09/2026 porque o
@@ -244,6 +244,13 @@ instalação sozinho em `%LOCALAPPDATA%\Adapted Dom Import\app`. Antes de copiar
 ele confere se o programa está aberto (`tasklist`), porque o Windows trava o jar
 em uso, e guarda a versão anterior como `.anterior`, para dar para voltar atrás.
 O `config.properties` da pessoa não é tocado.
+
+Na 3.11.1 ele passou a comparar os dois arquivos com `fc /b` **antes** de copiar.
+Antes disso ele dizia "ATUALIZADO" mesmo quando o jar de origem era idêntico ao
+instalado — e quem rodasse ia procurar na tela uma mudança que não existia. Agora
+diz **NADA A FAZER**, explica que os arquivos são idênticos byte a byte, e sugere
+a causa provável: o pacote de atualização é que está velho. Quando há troca de
+verdade, mostra data e tamanho do antes e do depois.
 
 ## Rito antes de empacotar
 1. `javac --release 8 -Xlint:all,-options -Werror -encoding UTF-8 -d out src\...\GeradorArquivo.java`

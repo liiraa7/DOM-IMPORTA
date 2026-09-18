@@ -68,6 +68,31 @@ echo Versao nova encontrada em:
 echo     %ORIGEM%
 echo.
 
+rem  ---- ja e o mesmo arquivo? entao nao ha o que fazer, e dizer
+rem  "atualizado" seria mentira
+fc /b "%ORIGEM%%JAR%" "%DESTINO%\%JAR%" >nul 2>&1
+if not errorlevel 1 (
+  echo ============================================
+  echo  NADA A FAZER
+  echo ============================================
+  echo.
+  echo O programa instalado JA E esta versao - o arquivo e
+  echo identico, byte a byte. Nao troquei nada.
+  echo.
+  echo Se voce esperava uma versao nova, entao o arquivo que veio
+  echo junto deste .bat e o antigo: gere o pacote de atualizacao de
+  echo novo, ou peca o arquivo atualizado a quem cuida do programa.
+  echo.
+  pause
+  exit /b 0
+)
+
+echo Instalado agora:
+for %%F in ("%DESTINO%\%JAR%") do echo     %%~tF   %%~zF bytes
+echo Versao nova:
+for %%F in ("%ORIGEM%%JAR%") do echo     %%~tF   %%~zF bytes
+echo.
+
 rem  ---- guarda a versao atual, para poder voltar atras
 copy /y "%DESTINO%\%JAR%" "%DESTINO%\%JAR%.anterior" >nul
 if errorlevel 1 (
@@ -94,6 +119,9 @@ if exist "%ORIGEM%config-modelo.properties" (
 echo ============================================
 echo  ATUALIZADO
 echo ============================================
+echo.
+echo Ficou assim:
+for %%F in ("%DESTINO%\%JAR%") do echo     %%~tF   %%~zF bytes
 echo.
 echo As suas configuracoes NAO foram mexidas: planilha, empresa,
 echo tipo, competencia e pasta continuam como estavam.
