@@ -2047,7 +2047,7 @@ public final class GeradorArquivo {
             return ""
                 + "<html><body style='font-family:sans-serif; font-size:12px; margin:4px 10px 10px "
                 + "10px'> "
-                + "<h2 style='color:#102E54; margin-bottom:2px'>Adapted Dom Import</h2> "
+                + "<h2 style='color:#102E54; margin-bottom:2px'>ADAPTED DOM IMPORT</h2> "
                 + "<div style='color:#5F6976'>O que este programa faz, e o que ele espera encontrar na "
                 + "planilha.</div> "
                 + "<hr> "
