@@ -1548,7 +1548,7 @@ public final class GeradorArquivo {
             faixa.add(titulo, g);
 
             g.gridy = 1;
-            JLabel subtitulo = new JLabel("gerador do arquivo de importacao");
+            JLabel subtitulo = new JLabel("Gerador de arquivos de texto a partir de planilhas do Excel");
             subtitulo.setForeground(AZUL_CLARO);
             faixa.add(subtitulo, g);
 
