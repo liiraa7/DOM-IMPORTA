@@ -7,7 +7,6 @@ ESCURO = "#102E54"
 VERDE = "#00743E"
 LARANJA = "#B56500"
 VERMELHO = "#B01C1C"
-AUTOR = "Ronald Lira"
 
 CABECA = ("<html><body style='font-family:sans-serif; font-size:12px; margin:4px 10px 10px 10px'>")
 
@@ -89,8 +88,8 @@ gere.</p>
 <h3 style='color:{VERMELHO}'>Se aparecer erro</h3>
 <p>Leia a mensagem em vermelho e veja a aba <b>Se der erro</b>: as causas comuns
 estão lá, com o que fazer em cada uma.</p>
-<p style='background:#FDEBEB; padding:6px'>Se não resolver, <b>fale com {AUTOR}</b>,
-que fez o programa. Leve junto o arquivo <b>gerador_arquivo.log</b>, que fica na
+<p style='background:#FDEBEB; padding:6px'>Se não resolver, <b>fale com o desenvolvedor do
+programa</b>. Leve junto o arquivo <b>gerador_arquivo.log</b>, que fica na
 pasta do programa &mdash; o caminho está no rodapé desta janela. Esse arquivo guarda
 o erro completo, com data e hora, e é o que resolve a dúvida mais rápido.</p>
 </body></html>"""
@@ -162,8 +161,7 @@ recusar a importação, ou os valores saírem estranhos, comece por aqui:</p>
 </ul>
 
 <h3 style='color:{AZUL}'>Nada disso resolveu</h3>
-<p style='background:#FDEBEB; padding:6px'><b>Fale com {AUTOR}</b>, que fez o
-programa.<br><br>
+<p style='background:#FDEBEB; padding:6px'><b>Fale com o desenvolvedor do programa</b>.<br><br>
 Leve junto o arquivo <b>gerador_arquivo.log</b>, da pasta do programa &mdash; o
 caminho completo está no rodapé desta janela. Ele guarda todo erro com data e
 hora, e poupa muito tempo de adivinhação.<br><br>

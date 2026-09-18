@@ -79,7 +79,7 @@ import javax.xml.stream.XMLStreamReader;
  */
 public final class GeradorArquivo {
 
-    static final String VERSAO = "3.10.0";
+    static final String VERSAO = "3.10.1";
     static final String NOME_PROGRAMA = "ADAPTED DOM IMPORT";
     static final String AUTOR = "Ronald Lira";
     static final String EMPRESA = "Triangulo Contabilidade";
@@ -89,7 +89,7 @@ public final class GeradorArquivo {
 
     /** Mostrada em todo erro: o usuario tem de saber a quem recorrer. */
     static final String CONTATO = "Se nao souber resolver, veja a aba \"Se der erro\""
-            + " ou fale com " + AUTOR + ", que fez o programa."
+            + " ou fale com o desenvolvedor do programa."
             + " Leve junto o arquivo " + NOME_LOG + " da pasta do programa.";
 
     private static final Logger LOG = Logger.getLogger(GeradorArquivo.class.getName());
@@ -2341,9 +2341,9 @@ public final class GeradorArquivo {
                 + "<h3 style='color:#B01C1C'>Se aparecer erro</h3> "
                 + "<p>Leia a mensagem em vermelho e veja a aba <b>Se der erro</b>: as causas comuns "
                 + "est&atilde;o l&aacute;, com o que fazer em cada uma.</p> "
-                + "<p style='background:#FDEBEB; padding:6px'>Se n&atilde;o resolver, <b>fale com Ronald "
-                + "Lira</b>, "
-                + "que fez o programa. Leve junto o arquivo <b>gerador_arquivo.log</b>, que fica na "
+                + "<p style='background:#FDEBEB; padding:6px'>Se n&atilde;o resolver, <b>fale com o "
+                + "desenvolvedor do "
+                + "programa</b>. Leve junto o arquivo <b>gerador_arquivo.log</b>, que fica na "
                 + "pasta do programa &mdash; o caminho est&aacute; no rodap&eacute; desta janela. Esse "
                 + "arquivo guarda "
                 + "o erro completo, com data e hora, e &eacute; o que resolve a d&uacute;vida mais "
@@ -2437,8 +2437,8 @@ public final class GeradorArquivo {
                 + "    sua vista, n&atilde;o do programa.</li> "
                 + "</ul> "
                 + "<h3 style='color:#1D5B9A'>Nada disso resolveu</h3> "
-                + "<p style='background:#FDEBEB; padding:6px'><b>Fale com Ronald Lira</b>, que fez o "
-                + "programa.<br><br> "
+                + "<p style='background:#FDEBEB; padding:6px'><b>Fale com o desenvolvedor do "
+                + "programa</b>.<br><br> "
                 + "Leve junto o arquivo <b>gerador_arquivo.log</b>, da pasta do programa &mdash; o "
                 + "caminho completo est&aacute; no rodap&eacute; desta janela. Ele guarda todo erro com "
                 + "data e "

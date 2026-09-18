@@ -6,7 +6,7 @@ e `ISel` de uma planilha do escritório. A empresa remove/desativa macros com
 frequência, obrigando a refazer o processo na mão. Agora a planilha fica limpa:
 o programa apenas LÊ o arquivo e escreve o txt no layout 6000/6100.
 
-Versão atual: **3.10.0**. Autor: **Ronald Lira** (Triangulo Contabilidade). Classe única `GeradorArquivo.java`
+Versão atual: **3.10.1**. Autor: **Ronald Lira** (Triangulo Contabilidade). Classe única `GeradorArquivo.java`
 (pacote `br.com.triangulo.gerador`), **sem dependência externa**.
 
 Histórico: começou em Python (1.0.1, Tkinter), virou Java em 15/09/2026 porque o
@@ -79,8 +79,9 @@ A **3.10.0** virou as abas de ajuda para o usuário, não para quem programa. A
 "Como funciona" — que explicava layout, config e história das macros — deu lugar
 a **"Como usar"**, um passo a passo de sete passos, do apontar a planilha até
 conferir o arquivo. A "Se der erro" passou a ser tabela de *mensagem na tela →
-o que fazer*. As duas terminam mandando falar com o autor e levar o
-`gerador_arquivo.log`.
+o que fazer*. As duas terminam mandando **falar com o desenvolvedor do programa** e levar o
+`gerador_arquivo.log` — sem citar o nome: crédito de autoria é na faixa e no
+rodapé, socorro é função, não pessoa.
 
 A constante `CONTATO` carrega essa frase e aparece em **todo** erro: na caixa de
 diálogo, no Registro e no `--console`. Caixa de diálogo com texto comprido passa
@@ -264,9 +265,10 @@ programa continua sem dependência nenhuma).
   durante o preenchimento da tela, e sem o guarda `preenchendo` o
   `copiarCampos()` apaga o que veio do config — foi bug de verdade em 17/09.
 - Nome do autor e da empresa na janela → constantes `AUTOR` e `EMPRESA`.
-- Frase de socorro em erro → constante `CONTATO`, no alto da classe. Ela é
-  montada com `AUTOR` e `NOME_LOG`; declarar antes deles dá
-  *illegal forward reference*.
+- Frase de socorro em erro → constante `CONTATO`, no alto da classe. Ela usa
+  `NOME_LOG`, então tem de vir declarada **depois** dele: antes dá
+  *illegal forward reference*. Quem quiser pôr ramal, e-mail ou WhatsApp para os
+  colegas, é essa linha.
 - Texto das abas de ajuda → `textoComoFunciona()` (a aba "Como usar") e
   `textoSeDerErro()`, no fim da
   classe `Janela`. É HTML, e **o fonte não tem um único caractere fora do ASCII**:
