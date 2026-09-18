@@ -7,161 +7,168 @@ ESCURO = "#102E54"
 VERDE = "#00743E"
 LARANJA = "#B56500"
 VERMELHO = "#B01C1C"
+AUTOR = "Ronald Lira"
 
 CABECA = ("<html><body style='font-family:sans-serif; font-size:12px; margin:4px 10px 10px 10px'>")
 
 COMO_FUNCIONA = CABECA + f"""
-<h2 style='color:{ESCURO}; margin-bottom:2px'>ADAPTED DOM IMPORT</h2>
-<div style='color:#5F6976'>O que este programa faz, e o que ele espera encontrar na planilha.</div>
+<h2 style='color:{ESCURO}; margin-bottom:2px'>Como usar</h2>
+<div style='color:#5F6976'>O passo a passo, do comeco ao arquivo pronto.</div>
 <hr>
 
-<h3 style='color:{AZUL}'>1. Para que ele serve</h3>
-<p>Ele faz o que as macros <b>lDom</b>, <b>ISel</b> e <b>Verifica_Arquivo</b> faziam:
-lê a planilha e grava um arquivo de texto no layout <b>6000/6100</b>, pronto para
-ser importado no sistema.</p>
-<p>A diferença é que a planilha agora pode ficar <b>limpa, sem macro nenhuma</b> — e
-assim a empresa pode desativar macros à vontade, que o trabalho continua saindo.</p>
-<p style='background:#E8F4EC; padding:6px'><b>O programa nunca escreve na planilha.</b>
-Ele só lê. Pode rodar com a planilha aberta que nada nela muda.</p>
+<p>O programa lê a sua planilha e grava o arquivo de texto que o sistema importa.
+Ele <b>nunca altera a planilha</b> &mdash; pode até deixá-la aberta no Excel.</p>
 
-<h3 style='color:{AZUL}'>2. A planilha só precisa da aba Base</h3>
-<p>Nada de aba <b>Principal</b>, nada de célula de controle. Aquela aba só servia para
-montar o nome do arquivo e dizer onde salvar — e isso agora é trabalho <b>deste
-programa</b>, nos campos da aba <b>Gerar arquivo</b>.</p>
-<p>É melhor assim por um motivo simples: aba que existe na planilha é aba onde alguém
-vai acabar digitando por engano.</p>
-<p>Quem ainda tiver a planilha antiga e quiser o jeito de antes põe
-<code>controle.usarAbaPrincipal=true</code> no config, e aí voltam a valer B6 e B7
-obrigatórias, B9 para a pasta e B10 para o nome.</p>
+<h3 style='color:{AZUL}'>Antes de começar</h3>
+<p>A planilha precisa ter a aba <b>Base</b> preenchida: uma linha por registro, das
+colunas <b>A até I</b>, a partir da <b>linha 2</b>. A linha 1 é o cabeçalho.</p>
 
-<h3 style='color:{AZUL}'>3. De onde sai o nome do arquivo</h3>
-<p>Dos três campos da tela, nesta ordem:</p>
-<pre style='background:#F2F5F9; padding:6px; font-size:11px'>Empresa  Tipo            Competência
-744    _ PARCELAMENTOS _ 082025      &nbsp;=&nbsp; 744_PARCELAMENTOS_082025.txt</pre>
-<p><b>Empresa</b> e <b>Tipo</b> são obrigatórios — é o mesmo asterisco que a planilha
-antiga tinha. Competência pode ficar em branco, e aí o nome sai sem ela, sem
-deixar separador solto.</p>
-<p>A <b>Pasta</b> é escolhida no botão <b>Selecionar...</b>. A linha azul logo abaixo dos
-campos mostra, em tempo real, <b>o arquivo exato</b> que o Gerar vai escrever — leia
-essa linha antes de clicar.</p>
-<p>A ordem do nome mora no config, em <code>saida.nomePadrao</code>. O molde de fábrica é
-<code>{{empresa}}_{{tipo}}_{{competencia}}</code>; trocar a ordem ou o separador é
-editar essa linha, sem recompilar nada.</p>
+<h3 style='color:{AZUL}'>Passo 1 &mdash; apontar a planilha</h3>
+<p>No campo <b>Planilha</b>, clique em <b>Selecionar...</b> e escolha o arquivo.
+Se aparecer uma linha vermelha, é porque o arquivo não está lá ou não tem a aba
+Base &mdash; leia o que ela diz.</p>
+<p>Depois da primeira vez o caminho fica guardado: nos meses seguintes já vem
+preenchido.</p>
 
-<h3 style='color:{AZUL}'>4. O que ele espera na aba Base</h3>
-<p>Uma linha por registro, das colunas <b>A até I</b>, começando na <b>linha 2</b> — a
-linha 1 é o cabeçalho e é ignorada.</p>
-<p>Linha totalmente vazia no meio da Base é <b>pulada</b>, e a varredura continua até o
-fim. A macro antiga parava na primeira vazia e cortava o arquivo pela metade;
-quem quiser o jeito antigo põe <code>base.pararNaLinhaVazia=true</code> no config.</p>
+<h3 style='color:{AZUL}'>Passo 2 &mdash; preencher os três campos</h3>
+<table cellpadding='4' cellspacing='0'>
+<tr><td><b>Empresa*</b></td><td>o código da empresa, por exemplo <b>744</b></td></tr>
+<tr><td><b>Tipo*</b></td><td>o que está sendo importado, por exemplo <b>PARCELAMENTOS</b></td></tr>
+<tr><td><b>Competência</b></td><td>o mês, por exemplo <b>082025</b></td></tr>
+</table>
+<p>Os dois com asterisco são obrigatórios. <b>É deles que sai o nome do arquivo</b>:</p>
+<pre style='background:#F2F5F9; padding:6px; font-size:11px'>744 + PARCELAMENTOS + 082025  =  744_PARCELAMENTOS_082025.txt</pre>
 
-<h3 style='color:{AZUL}'>5. O que sai no arquivo</h3>
-<p>Para cada linha da Base, duas linhas no txt:</p>
-<pre style='background:#F2F5F9; padding:6px; font-size:11px'>6000|X||||
-6100|001|JO&Atilde;O ATACAD&Atilde;O LTDA|1234,5|31/01/2026|3|acordo|||FIM|</pre>
-<p>O arquivo começa com uma <b>linha em branco</b>, é gravado em <b>windows-1252</b> e
-quebra linha com <b>CRLF</b> — exatamente como o <code>Print #</code> do VBA fazia. Mudar
-qualquer uma dessas três coisas é mexer no config, não no programa.</p>
+<h3 style='color:{AZUL}'>Passo 3 &mdash; escolher a pasta</h3>
+<p>No campo <b>Pasta</b>, clique em <b>Selecionar...</b> e escolha onde o arquivo
+deve ser gravado. Também fica guardado para as próximas vezes.</p>
 
-<h3 style='color:{AZUL}'>6. Como usar no dia a dia</h3>
-<ol>
-<li>Confira o caminho da <b>Planilha</b>. O campo <b>Abas</b> mostra os nomes que existem
-    de verdade no arquivo — serve de conferência.</li>
-<li>Preencha <b>Empresa</b>, <b>Tipo</b> e <b>Competência</b>, e escolha a <b>Pasta</b>.</li>
-<li>Leia a linha azul: é o arquivo que vai ser gravado.</li>
-<li>Clique <b>Gerar arquivo</b> (ou aperte Enter).</li>
-<li>Leia o <b>Registro</b>. Laranja é aviso, vermelho é erro, verde é o resultado.</li>
-<li><b>Abrir txt</b> abre o arquivo gerado; <b>Abrir pasta</b> abre a pasta dele.</li>
-</ol>
-<p>Os campos ficam guardados: na próxima abertura vêm preenchidos como você deixou.
-Em geral só a <b>Competência</b> muda de um mês para o outro.</p>
+<h3 style='color:{AZUL}'>Passo 4 &mdash; conferir a linha azul</h3>
+<p style='background:#EAF1F9; padding:6px'>A linha azul, logo abaixo dos campos,
+mostra <b>o arquivo exato</b> que vai ser gravado, com pasta e nome completos.
+<b>Leia essa linha antes de clicar.</b> É a sua última chance de notar um mês
+errado ou uma pasta errada.</p>
+<p>Se aparecer uma linha laranja avisando que esse arquivo <b>já foi gerado</b> em
+tal data, pare e confira a competência: quase sempre é o mês que ficou do
+mês passado.</p>
 
-<h3 style='color:{AZUL}'>7. Onde ficam as configurações</h3>
-<p>Na mesma pasta do programa ficam o <b>config.properties</b> — caminhos, colunas,
-prefixos, codificação, molde do nome — e o <b>gerador_arquivo.log</b>, que guarda
-toda geração e todo erro, com data e hora. O caminho exato está no pé desta
-janela.</p>
-<p>Depois de editar o config, clique <b>Recarregar config</b>: não precisa fechar o
-programa.</p>
+<h3 style='color:{AZUL}'>Passo 5 &mdash; gerar</h3>
+<p>Clique em <b>Gerar arquivo</b> (ou aperte <b>Enter</b>). Leva menos de um
+segundo.</p>
 
-<h3 style='color:{AZUL}'>8. Sem janela, para o agendador</h3>
-<p>O <code>gerar-agora.bat</code> gera o txt sem abrir nada, usando os campos guardados no
-config. É o que se coloca no Agendador de Tarefas do Windows. Nesse caso deixe
-<code>saida.sobrescrever=sempre</code>, senão a segunda execução recusa gravar porque o
-arquivo do dia anterior ainda está lá.</p>
+<h3 style='color:{AZUL}'>Passo 6 &mdash; ler o resultado</h3>
+<p>O quadro <b>Registro</b> conta o que aconteceu, e a cor já diz o que é:</p>
+<table cellpadding='5' cellspacing='0'>
+<tr style='background:#E8F4EC'><td><b style='color:{VERDE}'>verde</b></td>
+    <td>deu certo. Mostra quantos registros e quantos bytes</td></tr>
+<tr style='background:#FFF6E5'><td><b style='color:{LARANJA}'>laranja</b></td>
+    <td>gerou, mas tem algo para você conferir na planilha</td></tr>
+<tr style='background:#FDEBEB'><td><b style='color:{VERMELHO}'>vermelho</b></td>
+    <td>não gerou nada. A aba <b>Se der erro</b> explica o que fazer</td></tr>
+</table>
+<p><b>Aviso laranja não é erro</b>, mas também não é para ignorar: ele aponta a
+célula exata que merece um olhar.</p>
+
+<h3 style='color:{AZUL}'>Passo 7 &mdash; conferir o arquivo</h3>
+<p><b>Abrir txt</b> abre o arquivo gerado; <b>Abrir pasta</b> abre a pasta dele.
+Na primeira vez, vale abrir e dar uma olhada antes de importar no sistema.</p>
+
+<h3 style='color:{AZUL}'>No mês seguinte</h3>
+<p>Abra o programa: planilha, empresa, tipo e pasta já vêm preenchidos.
+<b>Normalmente só a competência muda.</b> Troque o mês, confira a linha azul e
+gere.</p>
+
+<h3 style='color:{AZUL}'>Os botões</h3>
+<table cellpadding='5' cellspacing='0'>
+<tr><td><b>Gerar arquivo</b></td><td>lê a planilha e grava o txt &nbsp;(atalho: Enter)</td></tr>
+<tr style='background:#FAFBFD'><td><b>Abrir txt</b></td><td>abre o arquivo que acabou de ser gerado</td></tr>
+<tr><td><b>Abrir pasta</b></td><td>abre a pasta onde ele foi gravado</td></tr>
+<tr style='background:#FAFBFD'><td><b>Recarregar config</b></td><td>lê de novo as configurações, se alguém as mudou por fora</td></tr>
+</table>
+
+<h3 style='color:{VERMELHO}'>Se aparecer erro</h3>
+<p>Leia a mensagem em vermelho e veja a aba <b>Se der erro</b>: as causas comuns
+estão lá, com o que fazer em cada uma.</p>
+<p style='background:#FDEBEB; padding:6px'>Se não resolver, <b>fale com {AUTOR}</b>,
+que fez o programa. Leve junto o arquivo <b>gerador_arquivo.log</b>, que fica na
+pasta do programa &mdash; o caminho está no rodapé desta janela. Esse arquivo guarda
+o erro completo, com data e hora, e é o que resolve a dúvida mais rápido.</p>
 </body></html>"""
 
 SE_DER_ERRO = CABECA + f"""
 <h2 style='color:{ESCURO}; margin-bottom:2px'>Se der erro</h2>
-<div style='color:#5F6976'>O que faz o programa parar, e o que só muda o resultado sem
-avisar alto.</div>
+<div style='color:#5F6976'>O que costuma dar errado, o que fazer, e a quem
+recorrer.</div>
 <hr>
 
-<h3 style='color:{VERMELHO}'>Faz o programa PARAR sem gerar nada</h3>
+<p><b>Primeiro:</b> leia a linha vermelha no quadro <b>Registro</b>. Ela diz o que
+aconteceu, em português. Quase sempre a resposta está na tabela abaixo.</p>
+
+<h3 style='color:{VERMELHO}'>Não gerou nada</h3>
 <table cellpadding='5' cellspacing='0'>
-<tr style='background:#F2F5F9'><td><b>O que está errado</b></td><td><b>O que fazer</b></td></tr>
-<tr><td><b>Planilha não está no caminho</b> do config — alguém moveu, renomeou
-    ou a rede caiu</td><td>clique <b>Selecionar...</b> e aponte o arquivo</td></tr>
-<tr style='background:#FAFBFD'><td><b>Arquivo é .xls antigo</b> (formato binário) ou
-    está corrompido</td><td>abra no Excel e salve como <b>.xlsx</b> ou <b>.xlsm</b></td></tr>
-<tr><td><b>Aba Base não existe</b> com esse nome — renomeada, com espaço sobrando,
-    ou escrita diferente</td><td>o erro lista as abas encontradas; ajuste
-    <code>planilha.abaBase</code> no config. Maiúscula/minúscula o programa resolve
-    sozinho e avisa</td></tr>
-<tr style='background:#FAFBFD'><td><b>Empresa ou Tipo em branco</b></td>
-    <td>preencha os dois: é deles que sai o nome do arquivo</td></tr>
-<tr><td><b>Pasta em branco</b></td><td>escolha a pasta no
-    <b>Selecionar...</b></td></tr>
-<tr style='background:#FAFBFD'><td><b>Aba Base sem nenhuma linha preenchida</b> a partir
-    da linha 2</td><td>confira se os dados não foram colados em outra aba</td></tr>
-<tr><td><b>Caractere que não existe em windows-1252</b> — emoji, símbolo grego,
-    caractere colado de site</td><td>o erro diz a linha; apague o caractere na planilha.
-    Acento comum, &ccedil;, ~ e &deg; podem ficar: esses existem na tabela</td></tr>
-<tr style='background:#FAFBFD'><td><b>O txt já existe</b> e o config está em
-    <code>recusar</code></td><td>apague o txt antigo — é de propósito, era o que a macro
-    <b>Verifica_Arquivo</b> fazia. Para sobrescrever, mude para <code>perguntar</code>
-    ou <code>sempre</code></td></tr>
-<tr><td><b>Pasta não existe e não pode ser criada</b> — unidade de rede fora do ar,
-    sem permissão</td><td>confira se o I: ou a pasta da rede está acessível</td></tr>
+<tr style='background:#F2F5F9'><td><b>O que a mensagem diz</b></td><td><b>O que fazer</b></td></tr>
+<tr><td><b>Não encontrei a planilha</b></td>
+    <td>alguém moveu, renomeou, ou a rede caiu. Clique em <b>Selecionar...</b> e
+    aponte o arquivo de novo</td></tr>
+<tr style='background:#FAFBFD'><td><b>Não parece uma planilha do Excel</b></td>
+    <td>é um arquivo <b>.xls</b> antigo. Abra no Excel e salve como
+    <b>.xlsx</b> ou <b>.xlsm</b></td></tr>
+<tr><td><b>A aba Base não existe</b></td>
+    <td>a aba foi renomeada ou tem espaço sobrando no nome. A mensagem lista as
+    abas que existem na planilha</td></tr>
+<tr style='background:#FAFBFD'><td><b>Preencha Empresa</b> / <b>Preencha Tipo</b></td>
+    <td>são obrigatórios: é deles que sai o nome do arquivo</td></tr>
+<tr><td><b>Escolha a pasta</b></td><td>falta dizer onde gravar</td></tr>
+<tr style='background:#FAFBFD'><td><b>A aba Base não tem nenhuma linha preenchida</b></td>
+    <td>confira se os dados não foram colados em outra aba</td></tr>
+<tr><td><b>Tem um caractere que não existe em windows-1252</b></td>
+    <td>alguém colou um emoji ou um símbolo estranho de um site. A mensagem diz a
+    linha; apague o caractere na planilha. Acento comum, &ccedil; e &atilde;
+    podem ficar</td></tr>
+<tr style='background:#FAFBFD'><td><b>O arquivo já existe. Você deve excluí-lo</b></td>
+    <td>é de propósito, para não apagar sem querer um arquivo bom. Apague o txt
+    antigo e gere de novo</td></tr>
+<tr><td><b>Não consegui criar a pasta</b></td>
+    <td>a unidade de rede está fora do ar, ou você não tem permissão nela</td></tr>
 </table>
 
-<h3 style='color:{LARANJA}'>Não para, mas muda o arquivo — sempre com aviso</h3>
+<h3 style='color:{LARANJA}'>Gerou, mas avisou em laranja</h3>
+<p>O arquivo está gravado. O aviso aponta algo na planilha que merece conferência:</p>
 <ul>
-<li><b>Fórmula sem valor calculado.</b> O programa lê o valor que está gravado na
-    planilha, não recalcula nada. Planilha salva por outro programa pode vir sem
-    esse valor: abra no Excel, deixe calcular e salve. O campo sai vazio e o aviso
-    aparece.</li>
-<li><b>Barra vertical dentro do dado.</b> O <code>|</code> separa os campos, então um
-    <code>|</code> digitado no meio do nome quebraria o layout. Ele é trocado por
-    espaço e o aviso diz em qual célula.</li>
-<li><b>Coluna A vazia com dados no resto da linha.</b> A linha é gravada e o aviso
-    pede conferência — pode ser dado colado na linha errada.</li>
-<li><b>Nome da aba com outra caixa</b> (BASE x Base). Funciona, mas o aviso fica
-    aparecendo até o config bater com o nome de verdade.</li>
+<li><b>Fórmula sem valor calculado</b> &mdash; abra a planilha no Excel, deixe
+    calcular e salve. O campo saiu vazio no arquivo.</li>
+<li><b>Barra vertical no meio do texto</b> &mdash; o <code>|</code> separa os campos
+    do arquivo, então ele foi trocado por espaço. O aviso diz em qual célula.</li>
+<li><b>Coluna A vazia com dados no resto da linha</b> &mdash; pode ser dado colado
+    na linha errada. A linha foi gravada assim mesmo.</li>
+<li><b>Este arquivo já foi gerado em tal data</b> &mdash; confira a competência
+    antes de gravar por cima.</li>
 </ul>
 
-<h3 style='color:{VERDE}'>Não avisa nada, e é onde mora o perigo</h3>
-<p>Estas quatro coisas geram um arquivo <i>perfeito</i> — com o conteúdo errado. Vale
-conferir na primeira vez:</p>
+<h3 style='color:{VERDE}'>Quando o arquivo sai certo mas o conteúdo está errado</h3>
+<p>Estas quatro coisas o programa <b>não tem como perceber</b>. Se o sistema
+recusar a importação, ou os valores saírem estranhos, comece por aqui:</p>
 <ul>
-<li><b>Máscara não vai para o txt, o valor vai.</b> Célula que mostra
-    <b>1.234,50</b> tem valor 1234,5 e é <b>1234,5</b> que sai. Era o que o VBA
-    gravava. Se o sistema exige duas casas sempre, isso tem de ser tratado.</li>
-<li><b>Data tem de ser data de verdade.</b> Se a data foi digitada como texto, sai
-    exatamente como está escrita — <b>31.01.26</b> continua <b>31.01.26</b>. E se a
-    célula tem data mas está formatada como Geral, sai o número de série do Excel
-    (<b>46053</b>) em vez da data.</li>
-<li><b>Célula mesclada</b> guarda o valor só na primeira célula; as outras vêm
-    vazias, e é isso que vai para o arquivo.</li>
-<li><b>Linha oculta ou escondida por filtro é lida igual.</b> O filtro é enfeite de
-    tela: para o programa, a linha está lá.</li>
+<li><b>O que vale é o valor, não o que aparece na tela.</b> Uma célula que mostra
+    <b>1.234,50</b> pode ter o valor 1234,5 &mdash; e é 1234,5 que vai para o
+    arquivo.</li>
+<li><b>Data tem de ser data de verdade.</b> Se foi digitada como texto, sai como
+    está escrita (<b>31.01.26</b> continua <b>31.01.26</b>). E data numa célula
+    formatada como Geral sai como número (<b>46053</b>).</li>
+<li><b>Célula mesclada</b> guarda o valor só na primeira célula; as outras vão
+    vazias para o arquivo.</li>
+<li><b>Linha escondida por filtro é lida do mesmo jeito.</b> O filtro esconde da
+    sua vista, não do programa.</li>
 </ul>
-<p style='background:#FFF6E5; padding:6px'><b>Espaço sobrando no fim do texto também
-vai para o arquivo</b>, porque o programa grava o que está na célula, sem aparar.</p>
 
-<h3 style='color:{AZUL}'>Quando nada disso explicar</h3>
-<p>O <b>gerador_arquivo.log</b>, na pasta do programa, guarda o erro completo com data e
-hora. É o arquivo que resolve a dúvida — mande ele junto ao pedir ajuda.</p>
+<h3 style='color:{AZUL}'>Nada disso resolveu</h3>
+<p style='background:#FDEBEB; padding:6px'><b>Fale com {AUTOR}</b>, que fez o
+programa.<br><br>
+Leve junto o arquivo <b>gerador_arquivo.log</b>, da pasta do programa &mdash; o
+caminho completo está no rodapé desta janela. Ele guarda todo erro com data e
+hora, e poupa muito tempo de adivinhação.<br><br>
+Se puder, diga também: o que você estava gerando, qual planilha, e o que a linha
+vermelha dizia.</p>
 </body></html>"""
 
 

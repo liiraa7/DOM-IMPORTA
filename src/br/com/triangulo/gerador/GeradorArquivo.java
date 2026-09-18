@@ -79,13 +79,18 @@ import javax.xml.stream.XMLStreamReader;
  */
 public final class GeradorArquivo {
 
-    static final String VERSAO = "3.9.0";
+    static final String VERSAO = "3.10.0";
     static final String NOME_PROGRAMA = "ADAPTED DOM IMPORT";
     static final String AUTOR = "Ronald Lira";
     static final String EMPRESA = "Triangulo Contabilidade";
     static final String NOME_CONFIG = "config.properties";
     static final String NOME_MODELO = "config-modelo.properties";
     static final String NOME_LOG = "gerador_arquivo.log";
+
+    /** Mostrada em todo erro: o usuario tem de saber a quem recorrer. */
+    static final String CONTATO = "Se nao souber resolver, veja a aba \"Se der erro\""
+            + " ou fale com " + AUTOR + ", que fez o programa."
+            + " Leve junto o arquivo " + NOME_LOG + " da pasta do programa.";
 
     private static final Logger LOG = Logger.getLogger(GeradorArquivo.class.getName());
 
@@ -167,6 +172,7 @@ public final class GeradorArquivo {
         } catch (Exception e) {
             LOG.log(Level.SEVERE, "falha ao gerar", e);
             System.err.println("ERRO: " + mensagem(e));
+            System.err.println(CONTATO);
             return 1;
         }
     }
@@ -1617,11 +1623,11 @@ public final class GeradorArquivo {
             abas.setFont(abas.getFont().deriveFont(Font.BOLD));
             abas.setBorder(BorderFactory.createEmptyBorder(8, 10, 4, 10));
             abas.addTab("Gerar arquivo", montarPainelGerar());
-            abas.addTab("Como funciona", montarAjuda(textoComoFunciona()));
+            abas.addTab("Como usar", montarAjuda(textoComoFunciona()));
             abas.addTab("Se der erro", montarAjuda(textoSeDerErro()));
             abas.setToolTipTextAt(0, "A tela de trabalho: planilha, destino e o resultado.");
-            abas.setToolTipTextAt(1, "Explicacao do programa e o que ele espera na planilha.");
-            abas.setToolTipTextAt(2, "O que na planilha faz o programa parar, e como resolver.");
+            abas.setToolTipTextAt(1, "O passo a passo de uso, do comeco ao arquivo pronto.");
+            abas.setToolTipTextAt(2, "O que costuma dar errado, o que fazer, e a quem recorrer.");
             return abas;
         }
 
@@ -1985,6 +1991,7 @@ public final class GeradorArquivo {
             } catch (Exception e) {
                 LOG.log(Level.SEVERE, "falha ao ler o config", e);
                 escrever("ERRO: " + mensagem(e), VERMELHO);
+                escrever(CONTATO, CINZA_TEXTO);
                 botaoGerar.setEnabled(false);
                 estado("config com problema", VERMELHO, VERMELHO_FUNDO);
             }
@@ -2130,9 +2137,12 @@ public final class GeradorArquivo {
                         }
                         LOG.log(Level.SEVERE, "falha ao gerar", e);
                         escrever("ERRO: " + mensagem(e), VERMELHO);
+                        escrever(CONTATO, CINZA_TEXTO);
                         estado("falhou - veja o Registro e a aba Se der erro", VERMELHO,
                                 VERMELHO_FUNDO);
-                        JOptionPane.showMessageDialog(Janela.this, mensagem(e),
+                        JOptionPane.showMessageDialog(Janela.this,
+                                caixaDeTexto(mensagem(e) + System.lineSeparator()
+                                        + System.lineSeparator() + CONTATO),
                                 NOME_PROGRAMA, JOptionPane.ERROR_MESSAGE);
                     }
                 }
@@ -2151,13 +2161,36 @@ public final class GeradorArquivo {
             return false;
         }
 
+        /**
+         * Texto comprido numa caixa de dialogo: sem largura fixa, a caixa
+         * estica numa linha so e passa da tela.
+         */
+        private static JLabel caixaDeTexto(String texto) {
+            StringBuilder sb = new StringBuilder("<html><div style='width:360px'>");
+            for (int i = 0; i < texto.length(); i++) {
+                char c = texto.charAt(i);
+                if (c == '&') {
+                    sb.append("&amp;");
+                } else if (c == '<') {
+                    sb.append("&lt;");
+                } else if (c == '>') {
+                    sb.append("&gt;");
+                } else if (c == '\n') {
+                    sb.append("<br>");
+                } else if (c != '\r') {
+                    sb.append(c);
+                }
+            }
+            return new JLabel(sb.append("</div></html>").toString());
+        }
+
         /** Pergunta de sim/nao na tela, venha de qual thread vier. */
         private boolean perguntar(final String texto) {
             final boolean[] resposta = new boolean[1];
             Runnable pergunta = new Runnable() {
                 public void run() {
-                    int escolha = JOptionPane.showConfirmDialog(Janela.this, texto,
-                            NOME_PROGRAMA, JOptionPane.YES_NO_OPTION,
+                    int escolha = JOptionPane.showConfirmDialog(Janela.this,
+                            caixaDeTexto(texto), NOME_PROGRAMA, JOptionPane.YES_NO_OPTION,
                             JOptionPane.QUESTION_MESSAGE);
                     resposta[0] = escolha == JOptionPane.YES_OPTION;
                 }
@@ -2225,108 +2258,96 @@ public final class GeradorArquivo {
             return ""
                 + "<html><body style='font-family:sans-serif; font-size:12px; margin:4px 10px 10px "
                 + "10px'> "
-                + "<h2 style='color:#102E54; margin-bottom:2px'>ADAPTED DOM IMPORT</h2> "
-                + "<div style='color:#5F6976'>O que este programa faz, e o que ele espera encontrar na "
-                + "planilha.</div> "
+                + "<h2 style='color:#102E54; margin-bottom:2px'>Como usar</h2> "
+                + "<div style='color:#5F6976'>O passo a passo, do comeco ao arquivo pronto.</div> "
                 + "<hr> "
-                + "<h3 style='color:#1D5B9A'>1. Para que ele serve</h3> "
-                + "<p>Ele faz o que as macros <b>lDom</b>, <b>ISel</b> e <b>Verifica_Arquivo</b> faziam: "
-                + "l&ecirc; a planilha e grava um arquivo de texto no layout <b>6000/6100</b>, pronto "
-                + "para "
-                + "ser importado no sistema.</p> "
-                + "<p>A diferen&ccedil;a &eacute; que a planilha agora pode ficar <b>limpa, sem macro "
-                + "nenhuma</b> &mdash; e "
-                + "assim a empresa pode desativar macros &agrave; vontade, que o trabalho continua "
-                + "saindo.</p> "
-                + "<p style='background:#E8F4EC; padding:6px'><b>O programa nunca escreve na "
-                + "planilha.</b> "
-                + "Ele s&oacute; l&ecirc;. Pode rodar com a planilha aberta que nada nela muda.</p> "
-                + "<h3 style='color:#1D5B9A'>2. A planilha s&oacute; precisa da aba Base</h3> "
-                + "<p>Nada de aba <b>Principal</b>, nada de c&eacute;lula de controle. Aquela aba "
-                + "s&oacute; servia para "
-                + "montar o nome do arquivo e dizer onde salvar &mdash; e isso agora &eacute; trabalho "
-                + "<b>deste "
-                + "programa</b>, nos campos da aba <b>Gerar arquivo</b>.</p> "
-                + "<p>&Eacute; melhor assim por um motivo simples: aba que existe na planilha &eacute; "
-                + "aba onde algu&eacute;m "
-                + "vai acabar digitando por engano.</p> "
-                + "<p>Quem ainda tiver a planilha antiga e quiser o jeito de antes p&otilde;e "
-                + "<code>controle.usarAbaPrincipal=true</code> no config, e a&iacute; voltam a valer B6 "
-                + "e B7 "
-                + "obrigat&oacute;rias, B9 para a pasta e B10 para o nome.</p> "
-                + "<h3 style='color:#1D5B9A'>3. De onde sai o nome do arquivo</h3> "
-                + "<p>Dos tr&ecirc;s campos da tela, nesta ordem:</p> "
-                + "<pre style='background:#F2F5F9; padding:6px; font-size:11px'>Empresa  Tipo            "
-                + "Compet&ecirc;ncia "
-                + "744    _ PARCELAMENTOS _ 082025      &nbsp;=&nbsp; 744_PARCELAMENTOS_082025.txt</pre> "
-                + "<p><b>Empresa</b> e <b>Tipo</b> s&atilde;o obrigat&oacute;rios &mdash; &eacute; o "
-                + "mesmo asterisco que a planilha "
-                + "antiga tinha. Compet&ecirc;ncia pode ficar em branco, e a&iacute; o nome sai sem ela, "
-                + "sem "
-                + "deixar separador solto.</p> "
-                + "<p>A <b>Pasta</b> &eacute; escolhida no bot&atilde;o <b>Selecionar...</b>. A linha "
-                + "azul logo abaixo dos "
-                + "campos mostra, em tempo real, <b>o arquivo exato</b> que o Gerar vai escrever &mdash; "
-                + "leia "
-                + "essa linha antes de clicar.</p> "
-                + "<p>A ordem do nome mora no config, em <code>saida.nomePadrao</code>. O molde de "
-                + "f&aacute;brica &eacute; "
-                + "<code>{empresa}_{tipo}_{competencia}</code>; trocar a ordem ou o separador &eacute; "
-                + "editar essa linha, sem recompilar nada.</p> "
-                + "<h3 style='color:#1D5B9A'>4. O que ele espera na aba Base</h3> "
-                + "<p>Uma linha por registro, das colunas <b>A at&eacute; I</b>, come&ccedil;ando na "
-                + "<b>linha 2</b> &mdash; a "
-                + "linha 1 &eacute; o cabe&ccedil;alho e &eacute; ignorada.</p> "
-                + "<p>Linha totalmente vazia no meio da Base &eacute; <b>pulada</b>, e a varredura "
-                + "continua at&eacute; o "
-                + "fim. A macro antiga parava na primeira vazia e cortava o arquivo pela metade; "
-                + "quem quiser o jeito antigo p&otilde;e <code>base.pararNaLinhaVazia=true</code> no "
-                + "config.</p> "
-                + "<h3 style='color:#1D5B9A'>5. O que sai no arquivo</h3> "
-                + "<p>Para cada linha da Base, duas linhas no txt:</p> "
-                + "<pre style='background:#F2F5F9; padding:6px; font-size:11px'>6000|X|||| "
-                + "6100|001|JO&Atilde;O ATACAD&Atilde;O LTDA|1234,5|31/01/2026|3|acordo|||FIM|</pre> "
-                + "<p>O arquivo come&ccedil;a com uma <b>linha em branco</b>, &eacute; gravado em "
-                + "<b>windows-1252</b> e "
-                + "quebra linha com <b>CRLF</b> &mdash; exatamente como o <code>Print #</code> do VBA "
-                + "fazia. Mudar "
-                + "qualquer uma dessas tr&ecirc;s coisas &eacute; mexer no config, n&atilde;o no "
-                + "programa.</p> "
-                + "<h3 style='color:#1D5B9A'>6. Como usar no dia a dia</h3> "
-                + "<ol> "
-                + "<li>Confira o caminho da <b>Planilha</b>. O campo <b>Abas</b> mostra os nomes que "
-                + "existem "
-                + "    de verdade no arquivo &mdash; serve de confer&ecirc;ncia.</li> "
-                + "<li>Preencha <b>Empresa</b>, <b>Tipo</b> e <b>Compet&ecirc;ncia</b>, e escolha a "
-                + "<b>Pasta</b>.</li> "
-                + "<li>Leia a linha azul: &eacute; o arquivo que vai ser gravado.</li> "
-                + "<li>Clique <b>Gerar arquivo</b> (ou aperte Enter).</li> "
-                + "<li>Leia o <b>Registro</b>. Laranja &eacute; aviso, vermelho &eacute; erro, verde "
-                + "&eacute; o resultado.</li> "
-                + "<li><b>Abrir txt</b> abre o arquivo gerado; <b>Abrir pasta</b> abre a pasta "
-                + "dele.</li> "
-                + "</ol> "
-                + "<p>Os campos ficam guardados: na pr&oacute;xima abertura v&ecirc;m preenchidos como "
-                + "voc&ecirc; deixou. "
-                + "Em geral s&oacute; a <b>Compet&ecirc;ncia</b> muda de um m&ecirc;s para o outro.</p> "
-                + "<h3 style='color:#1D5B9A'>7. Onde ficam as configura&ccedil;&otilde;es</h3> "
-                + "<p>Na mesma pasta do programa ficam o <b>config.properties</b> &mdash; caminhos, "
-                + "colunas, "
-                + "prefixos, codifica&ccedil;&atilde;o, molde do nome &mdash; e o "
-                + "<b>gerador_arquivo.log</b>, que guarda "
-                + "toda gera&ccedil;&atilde;o e todo erro, com data e hora. O caminho exato est&aacute; "
-                + "no p&eacute; desta "
-                + "janela.</p> "
-                + "<p>Depois de editar o config, clique <b>Recarregar config</b>: n&atilde;o precisa "
-                + "fechar o "
-                + "programa.</p> "
-                + "<h3 style='color:#1D5B9A'>8. Sem janela, para o agendador</h3> "
-                + "<p>O <code>gerar-agora.bat</code> gera o txt sem abrir nada, usando os campos "
-                + "guardados no "
-                + "config. &Eacute; o que se coloca no Agendador de Tarefas do Windows. Nesse caso deixe "
-                + "<code>saida.sobrescrever=sempre</code>, sen&atilde;o a segunda execu&ccedil;&atilde;o "
-                + "recusa gravar porque o "
-                + "arquivo do dia anterior ainda est&aacute; l&aacute;.</p> "
+                + "<p>O programa l&ecirc; a sua planilha e grava o arquivo de texto que o sistema "
+                + "importa. "
+                + "Ele <b>nunca altera a planilha</b> &mdash; pode at&eacute; deix&aacute;-la aberta no "
+                + "Excel.</p> "
+                + "<h3 style='color:#1D5B9A'>Antes de come&ccedil;ar</h3> "
+                + "<p>A planilha precisa ter a aba <b>Base</b> preenchida: uma linha por registro, das "
+                + "colunas <b>A at&eacute; I</b>, a partir da <b>linha 2</b>. A linha 1 &eacute; o "
+                + "cabe&ccedil;alho.</p> "
+                + "<h3 style='color:#1D5B9A'>Passo 1 &mdash; apontar a planilha</h3> "
+                + "<p>No campo <b>Planilha</b>, clique em <b>Selecionar...</b> e escolha o arquivo. "
+                + "Se aparecer uma linha vermelha, &eacute; porque o arquivo n&atilde;o est&aacute; "
+                + "l&aacute; ou n&atilde;o tem a aba "
+                + "Base &mdash; leia o que ela diz.</p> "
+                + "<p>Depois da primeira vez o caminho fica guardado: nos meses seguintes j&aacute; vem "
+                + "preenchido.</p> "
+                + "<h3 style='color:#1D5B9A'>Passo 2 &mdash; preencher os tr&ecirc;s campos</h3> "
+                + "<table cellpadding='4' cellspacing='0'> "
+                + "<tr><td><b>Empresa*</b></td><td>o c&oacute;digo da empresa, por exemplo "
+                + "<b>744</b></td></tr> "
+                + "<tr><td><b>Tipo*</b></td><td>o que est&aacute; sendo importado, por exemplo "
+                + "<b>PARCELAMENTOS</b></td></tr> "
+                + "<tr><td><b>Compet&ecirc;ncia</b></td><td>o m&ecirc;s, por exemplo "
+                + "<b>082025</b></td></tr> "
+                + "</table> "
+                + "<p>Os dois com asterisco s&atilde;o obrigat&oacute;rios. <b>&Eacute; deles que sai o "
+                + "nome do arquivo</b>:</p> "
+                + "<pre style='background:#F2F5F9; padding:6px; font-size:11px'>744 + PARCELAMENTOS + "
+                + "082025  =  744_PARCELAMENTOS_082025.txt</pre> "
+                + "<h3 style='color:#1D5B9A'>Passo 3 &mdash; escolher a pasta</h3> "
+                + "<p>No campo <b>Pasta</b>, clique em <b>Selecionar...</b> e escolha onde o arquivo "
+                + "deve ser gravado. Tamb&eacute;m fica guardado para as pr&oacute;ximas vezes.</p> "
+                + "<h3 style='color:#1D5B9A'>Passo 4 &mdash; conferir a linha azul</h3> "
+                + "<p style='background:#EAF1F9; padding:6px'>A linha azul, logo abaixo dos campos, "
+                + "mostra <b>o arquivo exato</b> que vai ser gravado, com pasta e nome completos. "
+                + "<b>Leia essa linha antes de clicar.</b> &Eacute; a sua &uacute;ltima chance de notar "
+                + "um m&ecirc;s "
+                + "errado ou uma pasta errada.</p> "
+                + "<p>Se aparecer uma linha laranja avisando que esse arquivo <b>j&aacute; foi "
+                + "gerado</b> em "
+                + "tal data, pare e confira a compet&ecirc;ncia: quase sempre &eacute; o m&ecirc;s que "
+                + "ficou do "
+                + "m&ecirc;s passado.</p> "
+                + "<h3 style='color:#1D5B9A'>Passo 5 &mdash; gerar</h3> "
+                + "<p>Clique em <b>Gerar arquivo</b> (ou aperte <b>Enter</b>). Leva menos de um "
+                + "segundo.</p> "
+                + "<h3 style='color:#1D5B9A'>Passo 6 &mdash; ler o resultado</h3> "
+                + "<p>O quadro <b>Registro</b> conta o que aconteceu, e a cor j&aacute; diz o que "
+                + "&eacute;:</p> "
+                + "<table cellpadding='5' cellspacing='0'> "
+                + "<tr style='background:#E8F4EC'><td><b style='color:#00743E'>verde</b></td> "
+                + "    <td>deu certo. Mostra quantos registros e quantos bytes</td></tr> "
+                + "<tr style='background:#FFF6E5'><td><b style='color:#B56500'>laranja</b></td> "
+                + "    <td>gerou, mas tem algo para voc&ecirc; conferir na planilha</td></tr> "
+                + "<tr style='background:#FDEBEB'><td><b style='color:#B01C1C'>vermelho</b></td> "
+                + "    <td>n&atilde;o gerou nada. A aba <b>Se der erro</b> explica o que fazer</td></tr> "
+                + "</table> "
+                + "<p><b>Aviso laranja n&atilde;o &eacute; erro</b>, mas tamb&eacute;m n&atilde;o "
+                + "&eacute; para ignorar: ele aponta a "
+                + "c&eacute;lula exata que merece um olhar.</p> "
+                + "<h3 style='color:#1D5B9A'>Passo 7 &mdash; conferir o arquivo</h3> "
+                + "<p><b>Abrir txt</b> abre o arquivo gerado; <b>Abrir pasta</b> abre a pasta dele. "
+                + "Na primeira vez, vale abrir e dar uma olhada antes de importar no sistema.</p> "
+                + "<h3 style='color:#1D5B9A'>No m&ecirc;s seguinte</h3> "
+                + "<p>Abra o programa: planilha, empresa, tipo e pasta j&aacute; v&ecirc;m preenchidos. "
+                + "<b>Normalmente s&oacute; a compet&ecirc;ncia muda.</b> Troque o m&ecirc;s, confira a "
+                + "linha azul e "
+                + "gere.</p> "
+                + "<h3 style='color:#1D5B9A'>Os bot&otilde;es</h3> "
+                + "<table cellpadding='5' cellspacing='0'> "
+                + "<tr><td><b>Gerar arquivo</b></td><td>l&ecirc; a planilha e grava o txt &nbsp;(atalho: "
+                + "Enter)</td></tr> "
+                + "<tr style='background:#FAFBFD'><td><b>Abrir txt</b></td><td>abre o arquivo que acabou "
+                + "de ser gerado</td></tr> "
+                + "<tr><td><b>Abrir pasta</b></td><td>abre a pasta onde ele foi gravado</td></tr> "
+                + "<tr style='background:#FAFBFD'><td><b>Recarregar config</b></td><td>l&ecirc; de novo "
+                + "as configura&ccedil;&otilde;es, se algu&eacute;m as mudou por fora</td></tr> "
+                + "</table> "
+                + "<h3 style='color:#B01C1C'>Se aparecer erro</h3> "
+                + "<p>Leia a mensagem em vermelho e veja a aba <b>Se der erro</b>: as causas comuns "
+                + "est&atilde;o l&aacute;, com o que fazer em cada uma.</p> "
+                + "<p style='background:#FDEBEB; padding:6px'>Se n&atilde;o resolver, <b>fale com Ronald "
+                + "Lira</b>, "
+                + "que fez o programa. Leve junto o arquivo <b>gerador_arquivo.log</b>, que fica na "
+                + "pasta do programa &mdash; o caminho est&aacute; no rodap&eacute; desta janela. Esse "
+                + "arquivo guarda "
+                + "o erro completo, com data e hora, e &eacute; o que resolve a d&uacute;vida mais "
+                + "r&aacute;pido.</p> "
                 + "</body></html> ";
         }
 
@@ -2335,104 +2356,96 @@ public final class GeradorArquivo {
                 + "<html><body style='font-family:sans-serif; font-size:12px; margin:4px 10px 10px "
                 + "10px'> "
                 + "<h2 style='color:#102E54; margin-bottom:2px'>Se der erro</h2> "
-                + "<div style='color:#5F6976'>O que faz o programa parar, e o que s&oacute; muda o "
-                + "resultado sem "
-                + "avisar alto.</div> "
+                + "<div style='color:#5F6976'>O que costuma dar errado, o que fazer, e a quem "
+                + "recorrer.</div> "
                 + "<hr> "
-                + "<h3 style='color:#B01C1C'>Faz o programa PARAR sem gerar nada</h3> "
+                + "<p><b>Primeiro:</b> leia a linha vermelha no quadro <b>Registro</b>. Ela diz o que "
+                + "aconteceu, em portugu&ecirc;s. Quase sempre a resposta est&aacute; na tabela "
+                + "abaixo.</p> "
+                + "<h3 style='color:#B01C1C'>N&atilde;o gerou nada</h3> "
                 + "<table cellpadding='5' cellspacing='0'> "
-                + "<tr style='background:#F2F5F9'><td><b>O que est&aacute; errado</b></td><td><b>O que "
+                + "<tr style='background:#F2F5F9'><td><b>O que a mensagem diz</b></td><td><b>O que "
                 + "fazer</b></td></tr> "
-                + "<tr><td><b>Planilha n&atilde;o est&aacute; no caminho</b> do config &mdash; "
-                + "algu&eacute;m moveu, renomeou "
-                + "    ou a rede caiu</td><td>clique <b>Selecionar...</b> e aponte o arquivo</td></tr> "
-                + "<tr style='background:#FAFBFD'><td><b>Arquivo &eacute; .xls antigo</b> (formato "
-                + "bin&aacute;rio) ou "
-                + "    est&aacute; corrompido</td><td>abra no Excel e salve como <b>.xlsx</b> ou "
-                + "<b>.xlsm</b></td></tr> "
-                + "<tr><td><b>Aba Base n&atilde;o existe</b> com esse nome &mdash; renomeada, com "
-                + "espa&ccedil;o sobrando, "
-                + "    ou escrita diferente</td><td>o erro lista as abas encontradas; ajuste "
-                + "    <code>planilha.abaBase</code> no config. Mai&uacute;scula/min&uacute;scula o "
-                + "programa resolve "
-                + "    sozinho e avisa</td></tr> "
-                + "<tr style='background:#FAFBFD'><td><b>Empresa ou Tipo em branco</b></td> "
-                + "    <td>preencha os dois: &eacute; deles que sai o nome do arquivo</td></tr> "
-                + "<tr><td><b>Pasta em branco</b></td><td>escolha a pasta no "
-                + "    <b>Selecionar...</b></td></tr> "
-                + "<tr style='background:#FAFBFD'><td><b>Aba Base sem nenhuma linha preenchida</b> a "
-                + "partir "
-                + "    da linha 2</td><td>confira se os dados n&atilde;o foram colados em outra "
-                + "aba</td></tr> "
-                + "<tr><td><b>Caractere que n&atilde;o existe em windows-1252</b> &mdash; emoji, "
-                + "s&iacute;mbolo grego, "
-                + "    caractere colado de site</td><td>o erro diz a linha; apague o caractere na "
-                + "planilha. "
-                + "    Acento comum, &ccedil;, ~ e &deg; podem ficar: esses existem na tabela</td></tr> "
-                + "<tr style='background:#FAFBFD'><td><b>O txt j&aacute; existe</b> e o config "
-                + "est&aacute; em "
-                + "    <code>recusar</code></td><td>apague o txt antigo &mdash; &eacute; de "
-                + "prop&oacute;sito, era o que a macro "
-                + "    <b>Verifica_Arquivo</b> fazia. Para sobrescrever, mude para "
-                + "<code>perguntar</code> "
-                + "    ou <code>sempre</code></td></tr> "
-                + "<tr><td><b>Pasta n&atilde;o existe e n&atilde;o pode ser criada</b> &mdash; unidade "
-                + "de rede fora do ar, "
-                + "    sem permiss&atilde;o</td><td>confira se o I: ou a pasta da rede est&aacute; "
-                + "acess&iacute;vel</td></tr> "
+                + "<tr><td><b>N&atilde;o encontrei a planilha</b></td> "
+                + "    <td>algu&eacute;m moveu, renomeou, ou a rede caiu. Clique em <b>Selecionar...</b> "
+                + "e "
+                + "    aponte o arquivo de novo</td></tr> "
+                + "<tr style='background:#FAFBFD'><td><b>N&atilde;o parece uma planilha do "
+                + "Excel</b></td> "
+                + "    <td>&eacute; um arquivo <b>.xls</b> antigo. Abra no Excel e salve como "
+                + "    <b>.xlsx</b> ou <b>.xlsm</b></td></tr> "
+                + "<tr><td><b>A aba Base n&atilde;o existe</b></td> "
+                + "    <td>a aba foi renomeada ou tem espa&ccedil;o sobrando no nome. A mensagem lista "
+                + "as "
+                + "    abas que existem na planilha</td></tr> "
+                + "<tr style='background:#FAFBFD'><td><b>Preencha Empresa</b> / <b>Preencha "
+                + "Tipo</b></td> "
+                + "    <td>s&atilde;o obrigat&oacute;rios: &eacute; deles que sai o nome do "
+                + "arquivo</td></tr> "
+                + "<tr><td><b>Escolha a pasta</b></td><td>falta dizer onde gravar</td></tr> "
+                + "<tr style='background:#FAFBFD'><td><b>A aba Base n&atilde;o tem nenhuma linha "
+                + "preenchida</b></td> "
+                + "    <td>confira se os dados n&atilde;o foram colados em outra aba</td></tr> "
+                + "<tr><td><b>Tem um caractere que n&atilde;o existe em windows-1252</b></td> "
+                + "    <td>algu&eacute;m colou um emoji ou um s&iacute;mbolo estranho de um site. A "
+                + "mensagem diz a "
+                + "    linha; apague o caractere na planilha. Acento comum, &ccedil; e &atilde; "
+                + "    podem ficar</td></tr> "
+                + "<tr style='background:#FAFBFD'><td><b>O arquivo j&aacute; existe. Voc&ecirc; deve "
+                + "exclu&iacute;-lo</b></td> "
+                + "    <td>&eacute; de prop&oacute;sito, para n&atilde;o apagar sem querer um arquivo "
+                + "bom. Apague o txt "
+                + "    antigo e gere de novo</td></tr> "
+                + "<tr><td><b>N&atilde;o consegui criar a pasta</b></td> "
+                + "    <td>a unidade de rede est&aacute; fora do ar, ou voc&ecirc; n&atilde;o tem "
+                + "permiss&atilde;o nela</td></tr> "
                 + "</table> "
-                + "<h3 style='color:#B56500'>N&atilde;o para, mas muda o arquivo &mdash; sempre com "
-                + "aviso</h3> "
+                + "<h3 style='color:#B56500'>Gerou, mas avisou em laranja</h3> "
+                + "<p>O arquivo est&aacute; gravado. O aviso aponta algo na planilha que merece "
+                + "confer&ecirc;ncia:</p> "
                 + "<ul> "
-                + "<li><b>F&oacute;rmula sem valor calculado.</b> O programa l&ecirc; o valor que "
-                + "est&aacute; gravado na "
-                + "    planilha, n&atilde;o recalcula nada. Planilha salva por outro programa pode vir "
-                + "sem "
-                + "    esse valor: abra no Excel, deixe calcular e salve. O campo sai vazio e o aviso "
-                + "    aparece.</li> "
-                + "<li><b>Barra vertical dentro do dado.</b> O <code>|</code> separa os campos, "
-                + "ent&atilde;o um "
-                + "    <code>|</code> digitado no meio do nome quebraria o layout. Ele &eacute; trocado "
-                + "por "
-                + "    espa&ccedil;o e o aviso diz em qual c&eacute;lula.</li> "
-                + "<li><b>Coluna A vazia com dados no resto da linha.</b> A linha &eacute; gravada e o "
-                + "aviso "
-                + "    pede confer&ecirc;ncia &mdash; pode ser dado colado na linha errada.</li> "
-                + "<li><b>Nome da aba com outra caixa</b> (BASE x Base). Funciona, mas o aviso fica "
-                + "    aparecendo at&eacute; o config bater com o nome de verdade.</li> "
+                + "<li><b>F&oacute;rmula sem valor calculado</b> &mdash; abra a planilha no Excel, deixe "
+                + "    calcular e salve. O campo saiu vazio no arquivo.</li> "
+                + "<li><b>Barra vertical no meio do texto</b> &mdash; o <code>|</code> separa os campos "
+                + "    do arquivo, ent&atilde;o ele foi trocado por espa&ccedil;o. O aviso diz em qual "
+                + "c&eacute;lula.</li> "
+                + "<li><b>Coluna A vazia com dados no resto da linha</b> &mdash; pode ser dado colado "
+                + "    na linha errada. A linha foi gravada assim mesmo.</li> "
+                + "<li><b>Este arquivo j&aacute; foi gerado em tal data</b> &mdash; confira a "
+                + "compet&ecirc;ncia "
+                + "    antes de gravar por cima.</li> "
                 + "</ul> "
-                + "<h3 style='color:#00743E'>N&atilde;o avisa nada, e &eacute; onde mora o perigo</h3> "
-                + "<p>Estas quatro coisas geram um arquivo <i>perfeito</i> &mdash; com o conte&uacute;do "
-                + "errado. Vale "
-                + "conferir na primeira vez:</p> "
+                + "<h3 style='color:#00743E'>Quando o arquivo sai certo mas o conte&uacute;do "
+                + "est&aacute; errado</h3> "
+                + "<p>Estas quatro coisas o programa <b>n&atilde;o tem como perceber</b>. Se o sistema "
+                + "recusar a importa&ccedil;&atilde;o, ou os valores sa&iacute;rem estranhos, comece por "
+                + "aqui:</p> "
                 + "<ul> "
-                + "<li><b>M&aacute;scara n&atilde;o vai para o txt, o valor vai.</b> C&eacute;lula que "
-                + "mostra "
-                + "    <b>1.234,50</b> tem valor 1234,5 e &eacute; <b>1234,5</b> que sai. Era o que o "
-                + "VBA "
-                + "    gravava. Se o sistema exige duas casas sempre, isso tem de ser tratado.</li> "
-                + "<li><b>Data tem de ser data de verdade.</b> Se a data foi digitada como texto, sai "
-                + "    exatamente como est&aacute; escrita &mdash; <b>31.01.26</b> continua "
-                + "<b>31.01.26</b>. E se a "
-                + "    c&eacute;lula tem data mas est&aacute; formatada como Geral, sai o n&uacute;mero "
-                + "de s&eacute;rie do Excel "
-                + "    (<b>46053</b>) em vez da data.</li> "
+                + "<li><b>O que vale &eacute; o valor, n&atilde;o o que aparece na tela.</b> Uma "
+                + "c&eacute;lula que mostra "
+                + "    <b>1.234,50</b> pode ter o valor 1234,5 &mdash; e &eacute; 1234,5 que vai para o "
+                + "    arquivo.</li> "
+                + "<li><b>Data tem de ser data de verdade.</b> Se foi digitada como texto, sai como "
+                + "    est&aacute; escrita (<b>31.01.26</b> continua <b>31.01.26</b>). E data numa "
+                + "c&eacute;lula "
+                + "    formatada como Geral sai como n&uacute;mero (<b>46053</b>).</li> "
                 + "<li><b>C&eacute;lula mesclada</b> guarda o valor s&oacute; na primeira c&eacute;lula; "
-                + "as outras v&ecirc;m "
-                + "    vazias, e &eacute; isso que vai para o arquivo.</li> "
-                + "<li><b>Linha oculta ou escondida por filtro &eacute; lida igual.</b> O filtro "
-                + "&eacute; enfeite de "
-                + "    tela: para o programa, a linha est&aacute; l&aacute;.</li> "
+                + "as outras v&atilde;o "
+                + "    vazias para o arquivo.</li> "
+                + "<li><b>Linha escondida por filtro &eacute; lida do mesmo jeito.</b> O filtro esconde "
+                + "da "
+                + "    sua vista, n&atilde;o do programa.</li> "
                 + "</ul> "
-                + "<p style='background:#FFF6E5; padding:6px'><b>Espa&ccedil;o sobrando no fim do texto "
-                + "tamb&eacute;m "
-                + "vai para o arquivo</b>, porque o programa grava o que est&aacute; na c&eacute;lula, "
-                + "sem aparar.</p> "
-                + "<h3 style='color:#1D5B9A'>Quando nada disso explicar</h3> "
-                + "<p>O <b>gerador_arquivo.log</b>, na pasta do programa, guarda o erro completo com "
+                + "<h3 style='color:#1D5B9A'>Nada disso resolveu</h3> "
+                + "<p style='background:#FDEBEB; padding:6px'><b>Fale com Ronald Lira</b>, que fez o "
+                + "programa.<br><br> "
+                + "Leve junto o arquivo <b>gerador_arquivo.log</b>, da pasta do programa &mdash; o "
+                + "caminho completo est&aacute; no rodap&eacute; desta janela. Ele guarda todo erro com "
                 + "data e "
-                + "hora. &Eacute; o arquivo que resolve a d&uacute;vida &mdash; mande ele junto ao pedir "
-                + "ajuda.</p> "
+                + "hora, e poupa muito tempo de adivinha&ccedil;&atilde;o.<br><br> "
+                + "Se puder, diga tamb&eacute;m: o que voc&ecirc; estava gerando, qual planilha, e o que "
+                + "a linha "
+                + "vermelha dizia.</p> "
                 + "</body></html> ";
         }
 

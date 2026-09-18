@@ -107,10 +107,14 @@ Três abas:
   arquivo exato que vai ser gravado: `744_PARCELAMENTOS_082025.txt`. O campo
   **Abas** mostra os nomes que existem de verdade na planilha. O **Registro**
   colore cada linha: aviso em laranja, erro em vermelho, resultado em verde.
-- **Como funciona** — o manual, dentro do programa: o que ele faz, o que espera em
-  B6, B7, B9 e B10, o que espera na aba Base, o que sai no txt e como usar.
-- **Se der erro** — o que na planilha faz o programa parar e como resolver, o que
-  só gera aviso, e as quatro coisas que saem erradas **sem** aviso nenhum.
+- **Como usar** — o passo a passo para quem vai usar: apontar a planilha,
+  preencher Empresa/Tipo/Competência, escolher a pasta, conferir a linha azul,
+  gerar e ler o resultado. Sem jargão de configuração.
+- **Se der erro** — tabela de *mensagem na tela → o que fazer*, o que os avisos
+  laranja querem dizer, e as quatro coisas que saem erradas **sem** aviso nenhum.
+
+Todo erro termina dizendo a quem recorrer e que arquivo levar junto
+(`gerador_arquivo.log`).
 
 Atalhos: `Enter` gera o arquivo, `Alt+T` abre o txt gerado, `Alt+P` abre a pasta,
 `Alt+R` recarrega o config.
