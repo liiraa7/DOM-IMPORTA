@@ -69,7 +69,7 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 /**
- * Gerador de Arquivo TXT - layout 6000/6100.
+ * Adapted Dom Import - gerador do arquivo TXT no layout 6000/6100.
  *
  * Substitui as macros VBA lDom, ISel e Verifica_Arquivo: le a planilha
  * (.xlsx/.xlsm) e escreve o txt. NUNCA escreve na planilha.
@@ -79,7 +79,8 @@ import javax.xml.stream.XMLStreamReader;
  */
 public final class GeradorArquivo {
 
-    static final String VERSAO = "3.6.0";
+    static final String VERSAO = "3.7.0";
+    static final String NOME_PROGRAMA = "Adapted Dom Import";
     static final String AUTOR = "Ronald Lira";
     static final String EMPRESA = "Triangulo Contabilidade";
     static final String NOME_CONFIG = "config.properties";
@@ -123,7 +124,7 @@ public final class GeradorArquivo {
     }
 
     private static void imprimirAjuda() {
-        System.out.println("Gerador de Arquivo TXT v" + VERSAO + " - " + AUTOR);
+        System.out.println(NOME_PROGRAMA + " v" + VERSAO + " - " + AUTOR);
         System.out.println("  (sem argumento)     abre a janela");
         System.out.println("  --console           gera o txt sem janela, usando o config.properties");
         System.out.println("  --config <arquivo>  usa outro config.properties");
@@ -132,7 +133,7 @@ public final class GeradorArquivo {
     private static int executarConsole(File arquivoConfig) {
         try {
             Config cfg = Config.carregar(arquivoConfig);
-            System.out.println("Gerador de Arquivo TXT v" + VERSAO + " - " + AUTOR + " (console)");
+            System.out.println(NOME_PROGRAMA + " v" + VERSAO + " - " + AUTOR + " (console)");
             System.out.println("config   = " + cfg.arquivo.getAbsolutePath());
             System.out.println("planilha = " + cfg.planilhaCaminho);
             // caminho vazio = deixa o programa montar o nome dos campos do config
@@ -1358,6 +1359,7 @@ public final class GeradorArquivo {
         private final JTextField campoPasta = new JTextField(24);
         private final JLabel rotuloArquivo = new JLabel(" ");
         private final JLabel rotuloAbas = new JLabel(" ");
+        private final JLabel rotuloAbasTitulo = new JLabel("Atencao:");
         private final JTextPane registro = new JTextPane();
         private final JProgressBar barra = new JProgressBar();
         private final JLabel rotuloEstado = new JLabel("pronto");
@@ -1375,7 +1377,7 @@ public final class GeradorArquivo {
         private boolean preenchendo;
 
         Janela(File arquivoConfig) {
-            super("Gerador de Arquivo TXT v" + VERSAO + " - by " + AUTOR);
+            super(NOME_PROGRAMA + " v" + VERSAO + " - by " + AUTOR);
             this.arquivoConfig = arquivoConfig;
             setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             List<java.awt.Image> icones = icones();
@@ -1390,7 +1392,7 @@ public final class GeradorArquivo {
             setContentPane(miolo);
             ligarBotoes();
             getRootPane().setDefaultButton(botaoGerar);
-            escrever("Gerador de Arquivo TXT v" + VERSAO + " - by " + AUTOR, AZUL);
+            escrever(NOME_PROGRAMA + " v" + VERSAO + " - by " + AUTOR, AZUL);
             carregarConfig();
             pack();
             setMinimumSize(new Dimension(720, 540));
@@ -1439,14 +1441,13 @@ public final class GeradorArquivo {
 
             g.gridx = 1;
             g.gridy = 0;
-            JLabel titulo = new JLabel("Gerador de Arquivo TXT");
+            JLabel titulo = new JLabel(NOME_PROGRAMA);
             titulo.setForeground(Color.WHITE);
             titulo.setFont(titulo.getFont().deriveFont(Font.BOLD, 20f));
             faixa.add(titulo, g);
 
             g.gridy = 1;
-            JLabel subtitulo = new JLabel("layout 6000/6100  -  no lugar das macros lDom, ISel"
-                    + " e Verifica_Arquivo");
+            JLabel subtitulo = new JLabel("gerador do arquivo de importacao");
             subtitulo.setForeground(AZUL_CLARO);
             faixa.add(subtitulo, g);
 
@@ -1553,14 +1554,14 @@ public final class GeradorArquivo {
             // --- linha 2: as abas que existem de verdade
             g.gridy = 1;
             g.gridx = 0;
-            JLabel rotulo = new JLabel("Abas:");
-            rotulo.setForeground(CINZA_TEXTO);
-            painel.add(rotulo, g);
+            rotuloAbasTitulo.setForeground(VERMELHO);
+            painel.add(negrito(rotuloAbasTitulo), g);
             g.gridx = 1;
             g.gridwidth = 5;
-            rotuloAbas.setForeground(AZUL);
             painel.add(negrito(rotuloAbas), g);
             g.gridwidth = 1;
+            rotuloAbasTitulo.setVisible(false);
+            rotuloAbas.setVisible(false);
 
             // --- linha 3: os tres campos que montam o nome
             g.gridy = 2;
@@ -1615,8 +1616,7 @@ public final class GeradorArquivo {
 
             g.gridy = 5;
             g.insets = new Insets(0, 6, 4, 6);
-            JLabel dica = new JLabel("* obrigatorios. O nome sai de Empresa, Tipo e Competencia -"
-                    + " o molde e saida.nomePadrao no config.");
+            JLabel dica = new JLabel("* obrigatorios. O nome do arquivo sai destes tres campos.");
             dica.setForeground(CINZA_TEXTO);
             painel.add(dica, g);
 
@@ -1831,7 +1831,7 @@ public final class GeradorArquivo {
                     preenchendo = false;
                 }
                 atualizarPrevia();
-                escrever("config lido de " + cfg.arquivo.getAbsolutePath(), null);
+                LOG.fine("config lido de " + cfg.arquivo.getAbsolutePath());
                 mostrarAbas();
                 botaoGerar.setEnabled(true);
                 estado("pronto", AZUL, AZUL_CLARO);
@@ -1843,27 +1843,50 @@ public final class GeradorArquivo {
             }
         }
 
+        /**
+         * Confere a planilha em silencio. A linha so aparece quando ha algo a
+         * resolver - planilha fora do lugar, ilegivel, ou sem a aba dos dados -
+         * e ai mostra as abas que existem, que e quando isso serve para algo.
+         */
         private void mostrarAbas() {
             String caminho = campoPlanilha.getText().trim();
             if (vazio(caminho) || !new File(caminho).isFile()) {
-                rotuloAbas.setForeground(VERMELHO);
-                rotuloAbas.setText("planilha nao encontrada neste caminho");
+                problemaNaPlanilha("Planilha nao encontrada neste caminho.");
                 return;
             }
             List<String> avisos = new ArrayList<String>();
             try {
                 LeitorPlanilha leitor = new LeitorPlanilha(new File(caminho), avisos);
                 try {
-                    rotuloAbas.setForeground(AZUL);
-                    rotuloAbas.setText(juntar(leitor.nomesDasAbas(), ", "));
+                    List<String> abas = leitor.nomesDasAbas();
+                    String procurada = cfg == null ? "Base" : cfg.abaBase;
+                    boolean achou = false;
+                    for (int i = 0; i < abas.size(); i++) {
+                        if (abas.get(i).trim().equalsIgnoreCase(procurada.trim())) {
+                            achou = true;
+                        }
+                    }
+                    if (achou) {
+                        rotuloAbas.setVisible(false);
+                        rotuloAbasTitulo.setVisible(false);
+                    } else {
+                        problemaNaPlanilha("Nao achei a aba \"" + procurada
+                                + "\". Nesta planilha existem: " + juntar(abas, ", "));
+                    }
                 } finally {
                     leitor.fechar();
                 }
             } catch (Exception e) {
                 LOG.log(Level.WARNING, "falha ao listar as abas", e);
-                rotuloAbas.setForeground(VERMELHO);
-                rotuloAbas.setText("nao consegui ler a planilha");
+                problemaNaPlanilha("Nao consegui ler esta planilha.");
             }
+        }
+
+        private void problemaNaPlanilha(String texto) {
+            rotuloAbasTitulo.setVisible(true);
+            rotuloAbas.setVisible(true);
+            rotuloAbas.setForeground(VERMELHO);
+            rotuloAbas.setText(texto);
         }
 
         private void escolherPlanilha() {
@@ -1943,7 +1966,7 @@ public final class GeradorArquivo {
                         estado("falhou - veja o Registro e a aba Se der erro", VERMELHO,
                                 VERMELHO_FUNDO);
                         JOptionPane.showMessageDialog(Janela.this, mensagem(e),
-                                "Gerador de Arquivo TXT", JOptionPane.ERROR_MESSAGE);
+                                NOME_PROGRAMA, JOptionPane.ERROR_MESSAGE);
                     }
                 }
             }.execute();
@@ -1956,7 +1979,7 @@ public final class GeradorArquivo {
                     int escolha = JOptionPane.showConfirmDialog(Janela.this,
                             "O arquivo ja existe:" + System.lineSeparator() + arquivo.getAbsolutePath()
                                     + System.lineSeparator() + System.lineSeparator() + "Sobrescrever?",
-                            "Gerador de Arquivo TXT", JOptionPane.YES_NO_OPTION,
+                            NOME_PROGRAMA, JOptionPane.YES_NO_OPTION,
                             JOptionPane.QUESTION_MESSAGE);
                     resposta[0] = escolha == JOptionPane.YES_OPTION;
                 }
@@ -2024,7 +2047,7 @@ public final class GeradorArquivo {
             return ""
                 + "<html><body style='font-family:sans-serif; font-size:12px; margin:4px 10px 10px "
                 + "10px'> "
-                + "<h2 style='color:#102E54; margin-bottom:2px'>Gerador de Arquivo TXT</h2> "
+                + "<h2 style='color:#102E54; margin-bottom:2px'>Adapted Dom Import</h2> "
                 + "<div style='color:#5F6976'>O que este programa faz, e o que ele espera encontrar na "
                 + "planilha.</div> "
                 + "<hr> "

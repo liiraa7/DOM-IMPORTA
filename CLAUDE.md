@@ -1,4 +1,4 @@
-# Gerador de Arquivo TXT — briefing do projeto
+# Adapted Dom Import — briefing do projeto
 
 ## O que é
 Programa Java standalone que substitui as macros VBA `lDom`, `Verifica_Arquivo`
@@ -6,7 +6,7 @@ e `ISel` de uma planilha do escritório. A empresa remove/desativa macros com
 frequência, obrigando a refazer o processo na mão. Agora a planilha fica limpa:
 o programa apenas LÊ o arquivo e escreve o txt no layout 6000/6100.
 
-Versão atual: **3.6.0**. Autor: **Ronald Lira** (Triangulo Contabilidade). Classe única `GeradorArquivo.java`
+Versão atual: **3.7.0**. Autor: **Ronald Lira** (Triangulo Contabilidade). Classe única `GeradorArquivo.java`
 (pacote `br.com.triangulo.gerador`), **sem dependência externa**.
 
 Histórico: começou em Python (1.0.1, Tkinter), virou Java em 15/09/2026 porque o
@@ -35,7 +35,16 @@ quando o nome tem a cara `EMPRESA_TIPO_COMPETENCIA`).
 
 A 3.6.0 trocou a xícara do Java pelo logo do escritório: ele é o ícone da janela
 (barra de título, barra de tarefas, Alt+Tab) e aparece na faixa azul, ao lado do
-título.
+título. A 3.7.0 batizou o programa de **Adapted Dom Import** (constante
+`NOME_PROGRAMA`) e tirou da tela o que era conversa interna: o subtítulo do
+layout 6000/6100 e das macros, o nome da chave `saida.nomePadrao` na dica, e o
+caminho do config no Registro (continua no rodapé e no log). A lista de abas
+virou aviso: só aparece, em vermelho, quando a planilha não abre ou não tem a
+aba dos dados — e aí mostra as que existem, que é quando isso serve.
+
+Os nomes de arquivo **não** mudaram: o jar continua `gerador-arquivo-txt.jar` e
+os .bat com os mesmos nomes, para não quebrar atalho nem tarefa agendada de
+quem já instalou.
 
 ## A planilha de verdade (print de 17/09/2026)
 A aba Principal da planilha do escritório era assim — e é dela que vieram os

@@ -11,7 +11,7 @@ VERMELHO = "#B01C1C"
 CABECA = ("<html><body style='font-family:sans-serif; font-size:12px; margin:4px 10px 10px 10px'>")
 
 COMO_FUNCIONA = CABECA + f"""
-<h2 style='color:{ESCURO}; margin-bottom:2px'>Gerador de Arquivo TXT</h2>
+<h2 style='color:{ESCURO}; margin-bottom:2px'>Adapted Dom Import</h2>
 <div style='color:#5F6976'>O que este programa faz, e o que ele espera encontrar na planilha.</div>
 <hr>
 
