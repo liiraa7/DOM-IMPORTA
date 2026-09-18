@@ -6,7 +6,7 @@ e `ISel` de uma planilha do escritório. A empresa remove/desativa macros com
 frequência, obrigando a refazer o processo na mão. Agora a planilha fica limpa:
 o programa apenas LÊ o arquivo e escreve o txt no layout 6000/6100.
 
-Versão atual: **3.10.1**. Autor: **Ronald Lira** (Triangulo Contabilidade). Classe única `GeradorArquivo.java`
+Versão atual: **3.11.0**. Autor: **Ronald Lira** (Triangulo Contabilidade). Classe única `GeradorArquivo.java`
 (pacote `br.com.triangulo.gerador`), **sem dependência externa**.
 
 Histórico: começou em Python (1.0.1, Tkinter), virou Java em 15/09/2026 porque o
@@ -87,6 +87,12 @@ A constante `CONTATO` carrega essa frase e aparece em **todo** erro: na caixa de
 diálogo, no Registro e no `--console`. Caixa de diálogo com texto comprido passa
 por `caixaDeTexto()`, que põe largura fixa em HTML — sem isso a caixa estica numa
 linha só e passa da tela.
+
+A **3.11.0** fechou um buraco que a pergunta do Ronald abriu: *"e se a linha
+passar do I?"*. Passava — e o dado sumia calado. Agora `Aba` guarda também a
+`ultimaColuna` com dado, e `lerRegistros()` avisa quando existe conteúdo à
+direita de `base.colunaFinal`, dizendo quais colunas, quantas linhas e a partir
+de qual. Um aviso só para a planilha inteira, não um por linha.
 
 ## A planilha de verdade (print de 17/09/2026)
 A aba Principal da planilha do escritório era assim — e é dela que vieram os

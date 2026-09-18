@@ -79,7 +79,7 @@ import javax.xml.stream.XMLStreamReader;
  */
 public final class GeradorArquivo {
 
-    static final String VERSAO = "3.10.1";
+    static final String VERSAO = "3.11.0";
     static final String NOME_PROGRAMA = "ADAPTED DOM IMPORT";
     static final String AUTOR = "Ronald Lira";
     static final String EMPRESA = "Triangulo Contabilidade";
@@ -650,6 +650,8 @@ public final class GeradorArquivo {
         final String nome;
         final Map<String, String> celulas = new HashMap<String, String>();
         int ultimaLinha;
+        /** Ultima coluna COM dado - serve para achar o que ficou fora do intervalo. */
+        int ultimaColuna;
 
         Aba(String nome) {
             this.nome = nome;
@@ -942,6 +944,9 @@ public final class GeradorArquivo {
                         String valor = lerCelula(r, nome, ref);
                         if (!vazio(valor)) {
                             aba.celulas.put(ref.toUpperCase(), valor);
+                            if (colunaAtual > aba.ultimaColuna) {
+                                aba.ultimaColuna = colunaAtual;
+                            }
                         }
                     }
                 }
@@ -1358,6 +1363,11 @@ public final class GeradorArquivo {
         int primeira = colunaParaIndice(cfg.colunaInicial);
         int ultima = colunaParaIndice(cfg.colunaFinal);
         List<String[]> registros = new ArrayList<String[]>();
+        // dado depois da ultima coluna configurada nao entra no arquivo, e
+        // ninguem perceberia: junta tudo num aviso so no fim
+        java.util.TreeSet<String> colunasDeFora = new java.util.TreeSet<String>();
+        int linhasDeFora = 0;
+        int primeiraLinhaDeFora = 0;
         for (int linha = cfg.linhaInicial; linha <= base.ultimaLinha; linha++) {
             String[] campos = new String[ultima - primeira + 1];
             boolean vaziaToda = true;
@@ -1380,6 +1390,28 @@ public final class GeradorArquivo {
                         + cfg.colunaInicial + " esta vazia. Gravei assim mesmo - confira.");
             }
             registros.add(campos);
+
+            boolean sobrou = false;
+            for (int coluna = ultima + 1; coluna <= base.ultimaColuna; coluna++) {
+                if (!vazio(base.valor(indiceParaColuna(coluna) + linha))) {
+                    colunasDeFora.add(indiceParaColuna(coluna));
+                    sobrou = true;
+                }
+            }
+            if (sobrou) {
+                linhasDeFora++;
+                if (primeiraLinhaDeFora == 0) {
+                    primeiraLinhaDeFora = linha;
+                }
+            }
+        }
+        if (!colunasDeFora.isEmpty()) {
+            avisos.add("A aba \"" + base.nome + "\" tem dados na coluna "
+                    + juntar(new ArrayList<String>(colunasDeFora), ", ")
+                    + " - fora do intervalo " + cfg.colunaInicial + " ate " + cfg.colunaFinal
+                    + " configurado. " + (linhasDeFora == 1 ? "1 linha" : linhasDeFora + " linhas")
+                    + " (a partir da linha " + primeiraLinhaDeFora + ") tem dado que NAO foi"
+                    + " gravado no arquivo. Se esses dados devem entrar, aumente a coluna final.");
         }
         return registros;
     }
@@ -2414,6 +2446,13 @@ public final class GeradorArquivo {
                 + "<li><b>Este arquivo j&aacute; foi gerado em tal data</b> &mdash; confira a "
                 + "compet&ecirc;ncia "
                 + "    antes de gravar por cima.</li> "
+                + "<li><b>Tem dados fora do intervalo de colunas</b> &mdash; algu&eacute;m escreveu "
+                + "&agrave; direita "
+                + "    da &uacute;ltima coluna que o programa l&ecirc;, e <b>isso n&atilde;o entrou no "
+                + "arquivo</b>. Ou a "
+                + "    informa&ccedil;&atilde;o est&aacute; na coluna errada, ou o intervalo precisa ser "
+                + "aumentado; o "
+                + "    aviso diz quais colunas e a partir de qual linha.</li> "
                 + "</ul> "
                 + "<h3 style='color:#00743E'>Quando o arquivo sai certo mas o conte&uacute;do "
                 + "est&aacute; errado</h3> "

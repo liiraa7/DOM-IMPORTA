@@ -142,6 +142,10 @@ aconteceu, em português. Quase sempre a resposta está na tabela abaixo.</p>
     na linha errada. A linha foi gravada assim mesmo.</li>
 <li><b>Este arquivo já foi gerado em tal data</b> &mdash; confira a competência
     antes de gravar por cima.</li>
+<li><b>Tem dados fora do intervalo de colunas</b> &mdash; alguém escreveu à direita
+    da última coluna que o programa lê, e <b>isso não entrou no arquivo</b>. Ou a
+    informação está na coluna errada, ou o intervalo precisa ser aumentado; o
+    aviso diz quais colunas e a partir de qual linha.</li>
 </ul>
 
 <h3 style='color:{VERDE}'>Quando o arquivo sai certo mas o conteúdo está errado</h3>
